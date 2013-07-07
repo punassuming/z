@@ -1,24 +1,45 @@
 ﻿<# 
+
 .SYNOPSIS 
+
    Tracks your most used directories, based on 'frecency'.
 
 .DESCRIPTION 
+
     After  a  short  learning  phase, z will take you to the most 'frecent'
     directory that matches ALL of the regexes given on the command line.
-.NOTES 
-	Current PowerShell implementation is very crude and does not yet support all of the options of the original z bash script.
-    
-	Although tracking of frequently used directories is obtained through the continued use of the "cd" command, the Windows registry is also scanned for frequently accessed paths.
+	
+.PARAMETER JumpPath
+
+A regular expression of the directory name to jump to.
+
+.PARAMETER Option
+
+r - Match by rank only
+t - Match by recent access only
+l - List only
+
+.NOTES
+
+Current PowerShell implementation is very crude and does not yet support all of the options of the original z bash script.
+Although tracking of frequently used directories is obtained through the continued use of the "cd" command, the Windows registry is also scanned for frequently accessed paths.
 	
 .LINK 
+
    https://github.com/vincpa/z
    
-.EXAMPLE 
-    cd foodir1
-	cd ..\foodir2
-	cd some\really\long\path
-	
-	z foodir - Takes you to the most frecent directory. In this example, foodir2.
+.EXAMPLE
+
+CD to the most frecent directory matching 'foo'
+    
+z foo
+
+.EXAMPLE
+
+CD to the most recently accessed directory matching 'foo'
+    
+z foo -o t
+
 #>
 
 $cdHistory = "$HOME\.cdhistory"
@@ -92,8 +113,9 @@ function z {
 	[Parameter(Mandatory=$true, Position=0)]
 	[string]
 	${JumpPath},
-		
+
 	[ValidateSet("t", "f", "r", "l")]
+	[Alias('o')]
 	[string]
 	$Option = 'f')
 
