@@ -93,7 +93,7 @@ function z {
 	[string]
 	${JumpPath},
 		
-	[ValidateSet("t", "f", "r")]
+	[ValidateSet("t", "f", "r", "l")]
 	[string]
 	$Option = 'f')
 
@@ -108,15 +108,19 @@ function z {
 			% {
 				$list += $_
 			}
-
-		if ($list.Length -gt 1) {
-			
-			$list | Sort-Object -Descending { $_.Score } | select -First 1 | % { Set-Location $_.Path.FullName }
-
-		} elseif ($list.Length -eq 0) {
-			Write-Host "$JumpPath Not found"
+		
+		if ($Option -eq 'l') {
+			$list | % { New-Object PSObject -Property  @{Rank = $_.Rank; Path = $_.Path.FullName; LastAccessed = [DateTime]$_.Time } } | Format-Table -AutoSize
 		} else {
-			Set-Location $list[0].Path
+			if ($list.Length -gt 1) {
+							
+				$list | Sort-Object -Descending { $_.Score } | select -First 1 | % { Set-Location $_.Path.FullName }
+
+			} elseif ($list.Length -eq 0) {
+				Write-Host "$JumpPath Not found"
+			} else {
+				Set-Location $list[0].Path
+			}
 		}
 	}
 }
