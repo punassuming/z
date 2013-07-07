@@ -126,7 +126,7 @@ function z {
 		$list = @()
 
 		$yer = $history | GetDirectoryEntry |
-			? { [System.Text.RegularExpressions.Regex]::Match($_.Path.Name, $JumpPath).Success } | FilterBasedOnArgs -Option $Option |
+			? { [System.Text.RegularExpressions.Regex]::Match($_.Path.Name, $JumpPath, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase).Success } | FilterBasedOnArgs -Option $Option |
 			% {
 				$list += $_
 			}
