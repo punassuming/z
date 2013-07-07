@@ -93,7 +93,7 @@ function z {
 	[string]
 	${JumpPath},
 		
-	[ValidateSet("t", "f")]
+	[ValidateSet("t", "f", "r")]
 	[string]
 	$Option = 'f')
 
@@ -233,6 +233,8 @@ function FilterBasedOnArgs {
 			$_.Add('Score', (GetFrecency $_.Rank $_.Time));
 		} elseif ($Option -eq 't') {
 			$_.Add('Score', $_.Time);
+		} elseif ($Option -eq 'r') {
+			$_.Add('Score', $_.Rank);
 		}
 		
 		return $_;
