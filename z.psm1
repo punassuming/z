@@ -89,10 +89,13 @@ function cdX
 
 function z {
 	param(
-	[Parameter(Mandatory=$true)]
-	[Alias('Jath')]
+	[Parameter(Mandatory=$true, Position=0)]
 	[string]
-	$jumppath)
+	${JumpPath},
+		
+	[ValidateSet("t", "f")]
+	[string]
+	$Option = 'f')
 
 	if ((Test-Path $cdHistory)) {
 
@@ -100,12 +103,9 @@ function z {
 
 		$list = @()
 
-		$history | GetDirectoryEntry | 
-			? { 
-				[System.Text.RegularExpressions.Regex]::Match($_.Path.Name, $jumppath).Success
-			} |
+		$yer = $history | GetDirectoryEntry |
+			? { [System.Text.RegularExpressions.Regex]::Match($_.Path.Name, $JumpPath).Success } | FilterBasedOnArgs -Option $Option |
 			% {
-				$_.Score = GetFrecency $_.Rank $_.Time
 				$list += $_
 			}
 
@@ -114,7 +114,7 @@ function z {
 			$list | Sort-Object -Descending { $_.Score } | select -First 1 | % { Set-Location $_.Path.FullName }
 
 		} elseif ($list.Length -eq 0) {
-			Write-Host "$jumppath Not found"
+			Write-Host "$JumpPath Not found"
 		} else {
 			Set-Location $list[0].Path
 		}
@@ -212,10 +212,30 @@ function GetDirectoryEntry {
 		  Rank=[decimal]::Parse($matches.Groups[1].Value);
 		  Time=[long]::Parse($matches.Groups[2].Value);
 		  Path=$dir;
-		  Score=0;
 		};
 		
 		return $obj;
+	}
+}
+
+function FilterBasedOnArgs {
+	Param(
+		[Parameter(ValueFromPipeline=$true)]
+    	[Hashtable]$historyEntry,
+		
+		[string]
+		$Option = 'f'
+	)
+	
+	Process {
+				
+		if ($Option -eq 'f') {
+			$_.Add('Score', (GetFrecency $_.Rank $_.Time));
+		} elseif ($Option -eq 't') {
+			$_.Add('Score', $_.Time);
+		}
+		
+		return $_;
 	}
 }
 
