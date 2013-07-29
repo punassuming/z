@@ -32,7 +32,7 @@ Although tracking of frequently used directories is obtained through the continu
    
 .EXAMPLE
 
-CD to the most frecent directory matching 'foo'
+CD to the most frecent directory matching 
     
 z foo
 
@@ -127,7 +127,7 @@ function z {
 
 		$list = @()
 
-		$yer = $history | GetDirectoryEntry |
+		$history | GetDirectoryEntry |
 			? { [System.Text.RegularExpressions.Regex]::Match($_.Path.Name, $JumpPath, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase).Success } | FilterBasedOnArgs -Option $Option |
 			% {
 				$list += $_
