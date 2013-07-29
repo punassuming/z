@@ -143,7 +143,7 @@ function z {
 			} elseif ($list.Length -eq 0) {
 				Write-Host "$JumpPath Not found"
 			} else {
-				Set-Location $list[0].Path
+				Set-Location $list[0].Path.FullName
 			}
 		}
 	}
@@ -206,7 +206,7 @@ function WriteCdCommandHistory() {
 			$lineObj.Rank = $lineObj.Rank * 0.99
 			
 			if ($lineObj.Rank -ge 1 -or $lineObj.Age -lt 86400) {
-				WriteHistoryEntry $cdHistory $lineObj.Rank $lineObj.Path
+				WriteHistoryEntry $cdHistory $lineObj.Rank $lineObj.Path.FullName
 			}
 		}
 	}
@@ -234,7 +234,10 @@ function GetDirectoryEntry {
 	Process {
 		$matches = [System.Text.RegularExpressions.Regex]::Match($line, '(\d+\.\d{2})(\d+)(.*)');
 
-		$dir = (New-Object -TypeName System.IO.DirectoryInfo -ArgumentList $matches.Groups[3].Value);
+		$dir = @{
+			Name = [System.IO.Path]::GetFileName($matches.Groups[3].Value);
+			FullName = $matches.Groups[3].Value
+		}
 		
 		$obj = @{
 		  Rank=[decimal]::Parse($matches.Groups[1].Value);
