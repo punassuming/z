@@ -15,9 +15,11 @@ A regular expression of the directory name to jump to.
 
 .PARAMETER Option
 
-r - Match by rank only
-t - Match by recent access only
-l - List only
+Frecency - Match by frecency (default)
+Rank - Match by rank only
+Time - Match by recent access only
+List - List only
+CurrentDirectory - Restrict matches to subdirectories of the current directory
 
 .NOTES
 
@@ -38,7 +40,7 @@ z foo
 
 CD to the most recently accessed directory matching 'foo'
     
-z foo -o t
+z foo -o Time
 
 #>
 
@@ -114,10 +116,10 @@ function z {
 	[string]
 	${JumpPath},
 
-	[ValidateSet("t", "f", "r", "l")]
+	[ValidateSet("Time", "Frecency", "Rank", "List", "CurrentDirectory")]
 	[Alias('o')]
 	[string]
-	$Option = 'f')
+	$Option = 'Frecency')
 
 	if ((Test-Path $cdHistory)) {
 
@@ -131,7 +133,7 @@ function z {
 				$list += $_
 			}
 		
-		if ($Option -eq 'l') {
+		if ($Option -eq 'List') {
 			$list | % { New-Object PSObject -Property  @{Rank = $_.Rank; Path = $_.Path.FullName; LastAccessed = [DateTime]$_.Time } } | Format-Table -AutoSize
 		} else {
 			if ($list.Length -gt 1) {
@@ -250,16 +252,16 @@ function FilterBasedOnArgs {
     	[Hashtable]$historyEntry,
 		
 		[string]
-		$Option = 'f'
+		$Option = 'Frecency'
 	)
 	
 	Process {
 				
-		if ($Option -eq 'f') {
+		if ($Option -eq 'Frecency') {
 			$_.Add('Score', (GetFrecency $_.Rank $_.Time));
-		} elseif ($Option -eq 't') {
+		} elseif ($Option -eq 'Time') {
 			$_.Add('Score', $_.Time);
-		} elseif ($Option -eq 'r') {
+		} elseif ($Option -eq 'Rank') {
 			$_.Add('Score', $_.Rank);
 		}
 		
