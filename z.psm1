@@ -69,44 +69,31 @@ function cdX
 
 	begin
 	{
-	    try {
-	        $outBuffer = $null
-	        if ($PSBoundParameters.TryGetValue('OutBuffer', [ref]$outBuffer))
-	        {
-	            $PSBoundParameters['OutBuffer'] = 1
-	        }
-			
-			$PSBoundParameters['ErrorAction'] = 'Stop'
-			
-	        $wrappedCmd = $ExecutionContext.InvokeCommand.GetCommand('Set-Location', [System.Management.Automation.CommandTypes]::Cmdlet)
-	        $scriptCmd = {& $wrappedCmd @PSBoundParameters }
-					
-	        $steppablePipeline = $scriptCmd.GetSteppablePipeline($myInvocation.CommandOrigin)
-	        $steppablePipeline.Begin($PSCmdlet)					
-	    } catch {
-			throw
-	    }
+        $outBuffer = $null
+        if ($PSBoundParameters.TryGetValue('OutBuffer', [ref]$outBuffer))
+        {
+            $PSBoundParameters['OutBuffer'] = 1
+        }
+		
+		$PSBoundParameters['ErrorAction'] = 'Stop'
+		
+        $wrappedCmd = $ExecutionContext.InvokeCommand.GetCommand('Set-Location', [System.Management.Automation.CommandTypes]::Cmdlet)
+        $scriptCmd = {& $wrappedCmd @PSBoundParameters }
+				
+        $steppablePipeline = $scriptCmd.GetSteppablePipeline($myInvocation.CommandOrigin)
+        $steppablePipeline.Begin($PSCmdlet)					
 	}
 
 	process
 	{
-	    try {
-	        $steppablePipeline.Process($_)
-			
-			WriteCdCommandHistory # Build up the DB.
-			
-	    } catch [System.Management.Automation.ActionPreferenceStopException] {
-	        throw
-	    }
+        $steppablePipeline.Process($_)
+		
+		WriteCdCommandHistory # Build up the DB.
 	}
 
 	end
 	{
-	    try {
-	        $steppablePipeline.End()		
-	    } catch {
-	        throw
-	    }
+	    $steppablePipeline.End()
 	}
 }
 
