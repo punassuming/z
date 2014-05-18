@@ -222,7 +222,7 @@ function WriteCdCommandHistory() {
 			}
 		}
 	} catch {
-		[System.IO.File]::AppendAllText($cdHistory, $history) # Restore file should an error occur.
+		[System.IO.File]::WriteAllText($cdHistory, $history) # Restore file should an error occur.
 		Write-Host $_.Exception.ToString() -ForegroundColor Red
 	}
 }
@@ -232,7 +232,7 @@ function FormatRank($rank) {
 }
 
 function WriteHistoryEntry($cdHistory, $rank, $directory) {
-	$entry = GetFormattedHistoryEntry($rank, $directory)
+	$entry = GetFormattedHistoryEntry $rank $directory
 	[System.IO.File]::AppendAllText($cdHistory, $entry)
 }
 
