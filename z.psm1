@@ -109,13 +109,15 @@ function z {
 	$Option = 'Frecency')
 
 	if ((Test-Path $cdHistory)) {
-
-		$history = [System.IO.File]::ReadAllLines($cdHistory)
+		
+		$mruList = GetMRURecentDirectory
+		
+		$history = $mruList + [System.IO.File]::ReadAllLines($cdHistory)
 
 		$list = @()
 
-		$history | GetDirectoryEntry |
-			? { [System.Text.RegularExpressions.Regex]::Match($_.Path.Name, $JumpPath, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase).Success } | FilterBasedOnArgs -Option $Option |
+		$history.Split([Environment]::NewLine) | ? { (-not [String]::IsNullOrWhiteSpace($_)) } | GetDirectoryEntry |
+			? { DirectoryEntryMatchPredicate -path $_.Path.Name -jumpPath $JumpPath } | FilterBasedOnArgs -Option $Option |
 			% {
 				$list += $_
 			}
@@ -134,6 +136,24 @@ function z {
 			}
 		}
 	}
+}
+
+function DirectoryEntryMatchPredicate {
+	Param(
+		[Parameter(
+        Mandatory=$true,
+        ValueFromPipeline=$true,
+        ValueFromPipelineByPropertyName=$true)]
+    	[String]$Path,
+		
+		[Parameter(
+        Mandatory=$true,
+        ValueFromPipeline=$true,
+        ValueFromPipelineByPropertyName=$true)]
+		[string] $JumpPath
+	)
+	
+	return [System.Text.RegularExpressions.Regex]::Match($Path, $JumpPath, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase).Success
 }
 
 function GetFrecency($rank, $time) {
@@ -211,8 +231,13 @@ function FormatRank($rank) {
 }
 
 function WriteHistoryEntry($cdHistory, $rank, $directory) {
+	$entry = GetFormattedHistoryEntry($rank, $directory)
+	[System.IO.File]::AppendAllText($cdHistory, $entry)
+}
+
+function GetFormattedHistoryEntry($rank, $directory) {
 	$newline = [Environment]::NewLine
-	[System.IO.File]::AppendAllText($cdHistory, (FormatRank $rank) + (Get-Date).Ticks + $directory + $newline)	
+	(FormatRank $rank) + (Get-Date).Ticks + $directory + $newline
 }
 
 function GetDirectoryEntry {
@@ -226,10 +251,17 @@ function GetDirectoryEntry {
 	)
 	
 	Process {
+
 		$matches = [System.Text.RegularExpressions.Regex]::Match($line, '(\d+\.\d{2})(\d+)(.*)');
 
+		$pathValue = $matches.Groups[3].Value.Trim()
+		
+		try {	
+			[System.IO.Path]::GetFileName($pathValue);
+		} catch [System.ArgumentException] { }
+		
 		$dir = @{
-			Name = [System.IO.Path]::GetFileName($matches.Groups[3].Value);
+			Name = $pathValue
 			FullName = $matches.Groups[3].Value
 		}
 		
@@ -238,9 +270,16 @@ function GetDirectoryEntry {
 		  Time=[long]::Parse($matches.Groups[2].Value);
 		  Path=$dir;
 		};
-		
+
 		return $obj;
 	}
+}
+
+function GetMRURecentDirectory {
+
+	$mruEntries = (Get-Item -Path HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\TypedPaths | % { $item = $_; $_.GetValueNames() | % { $item.GetValue($_) } })
+		
+	$mruEntries | % { GetFormattedHistoryEntry 1 $_.ToString() }
 }
 
 function FilterBasedOnArgs {
