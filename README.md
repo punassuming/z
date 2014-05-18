@@ -1,6 +1,6 @@
 ## z
 
-z lets you quickly navigate the file system in PowerShell based on your `cd` command history. It's a port of [the z bash shell script. Read more about z](README)
+z lets you quickly navigate the file system in PowerShell based on your `cd` command history. It's a port of [the z bash shell script.](README)
 
 ## Goals
 
