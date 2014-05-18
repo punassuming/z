@@ -169,46 +169,53 @@ function WriteCdCommandHistory() {
 
 	$history = ''
 	
-	if ((Test-Path $cdHistory)) {
-		$history = [System.IO.File]::ReadAllLines($cdHistory);
-		Remove-Item $cdHistory
-	}
-	
-	$foundDirectory = false
-	$runningTotal = 0
-	
-	foreach ($line in $history) {
-				
-		if ($line -ne '') {
-			$lineObj = GetDirectoryEntry $line
-			if ($lineObj.Path.FullName -eq $currentDirectory) {	
-				$lineObj.Rank++
-				$foundDirectory = $true
-				WriteHistoryEntry $cdHistory $lineObj.Rank $currentDirectory
-			} else {
-				[System.IO.File]::AppendAllText($cdHistory, $line + [Environment]::NewLine)
-			}
-			$runningTotal += $lineObj.Rank
+	try {
+
+		# Copy contents of file in to memory.
+		if ((Test-Path $cdHistory)) {
+			$history = [System.IO.File]::ReadAllLines($cdHistory);
+			Remove-Item $cdHistory
 		}
-	}
-	
-	if (-not $foundDirectory) {
-		WriteHistoryEntry $cdHistory 1 $currentDirectory
-		$runningTotal += 1
-	}
-	
-	if ($runningTotal -gt 6000) {
 		
-		$lines = [System.IO.File]::ReadAllLines($cdHistory)
-		Remove-Item $cdHistory
-		 $lines | % {
-		 	$lineObj = GetDirectoryEntry $_
-			$lineObj.Rank = $lineObj.Rank * 0.99
-			
-			if ($lineObj.Rank -ge 1 -or $lineObj.Age -lt 86400) {
-				WriteHistoryEntry $cdHistory $lineObj.Rank $lineObj.Path.FullName
+		$foundDirectory = false
+		$runningTotal = 0
+		
+		foreach ($line in $history) {
+					
+			if ($line -ne '') {
+				$lineObj = GetDirectoryEntry $line
+				if ($lineObj.Path.FullName -eq $currentDirectory) {	
+					$lineObj.Rank++
+					$foundDirectory = $true
+					WriteHistoryEntry $cdHistory $lineObj.Rank $currentDirectory
+				} else {
+					[System.IO.File]::AppendAllText($cdHistory, $line + [Environment]::NewLine)
+				}
+				$runningTotal += $lineObj.Rank
 			}
 		}
+		
+		if (-not $foundDirectory) {
+			WriteHistoryEntry $cdHistory 1 $currentDirectory
+			$runningTotal += 1
+		}
+		
+		if ($runningTotal -gt 6000) {
+			
+			$lines = [System.IO.File]::ReadAllLines($cdHistory)
+			Remove-Item $cdHistory
+			 $lines | % {
+			 	$lineObj = GetDirectoryEntry $_
+				$lineObj.Rank = $lineObj.Rank * 0.99
+				
+				if ($lineObj.Rank -ge 1 -or $lineObj.Age -lt 86400) {
+					WriteHistoryEntry $cdHistory $lineObj.Rank $lineObj.Path.FullName
+				}
+			}
+		}
+	} catch {
+		[System.IO.File]::AppendAllText($cdHistory, $history) # Restore file should an error occur.
+		Write-Host $_.Exception.ToString() -ForegroundColor Red
 	}
 }
 
