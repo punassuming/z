@@ -8,13 +8,13 @@ Save time typing frequently used paths.
 
 ## Examples
 
-z foo         cd to most frecent dir matching foo
+	z foo         cd to most frecent dir matching foo
 
-z -r foo      cd to highest ranked dir matching foo
+	z -r foo      cd to highest ranked dir matching foo
 
-z -t foo      cd to most recently accessed dir matching foo
+	z -t foo      cd to most recently accessed dir matching foo
 
-z -l foo      list all dirs matching foo (by frecency)
+	z -l foo      list all dirs matching foo (by frecency)
 
 ### Limitations
 
