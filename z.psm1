@@ -88,7 +88,7 @@ function cdX
 	{
         $steppablePipeline.Process($_)
 		
-		WriteCdCommandHistory # Build up the DB.
+		Save-CdCommandHistory # Build up the DB.
 	}
 
 	end
