@@ -313,3 +313,5 @@ function FilterBasedOnArgs {
 
 #Override the existing CD command with the wrapper in order to log 'cd' commands.
 Set-Alias -Name cd -Value cdX -Force -Option AllScope -Scope Global
+
+Export-ModuleMember -Function z -Alias cd
