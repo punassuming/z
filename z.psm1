@@ -110,14 +110,14 @@ function z {
 
 	if ((Test-Path $cdHistory)) {
 		
-		$mruList = GetMRURecentDirectory
+		$mruList = Get-MostRecentDirectoryEntries
 		
 		$history = $mruList + [System.IO.File]::ReadAllLines($cdHistory)
 
 		$list = @()
 
-		$history.Split([Environment]::NewLine) | ? { (-not [String]::IsNullOrWhiteSpace($_)) } | GetDirectoryEntry |
-			? { DirectoryEntryMatchPredicate -path $_.Path -jumpPath $JumpPath } | FilterBasedOnArgs -Option $Option |
+		$history.Split([Environment]::NewLine) | ? { (-not [String]::IsNullOrWhiteSpace($_)) } | ConvertTo-DirectoryEntry |
+			? { Get-DirectoryEntryMatchPredicate -path $_.Path -jumpPath $JumpPath } | Get-ArgsFilter -Option $Option |
 			% {
 				$list += $_
 			}
@@ -138,7 +138,7 @@ function z {
 	}
 }
 
-function DirectoryEntryMatchPredicate {
+function Get-DirectoryEntryMatchPredicate {
 	Param(
 		[Parameter(
         ValueFromPipeline=$true,
@@ -157,7 +157,7 @@ function DirectoryEntryMatchPredicate {
 	}
 }
 
-function GetFrecency($rank, $time) {
+function Get-Frecency($rank, $time) {
 
 	# Last access date/time
 	$dx = (Get-Date).Subtract((New-Object System.DateTime -ArgumentList $time)).TotalSeconds
@@ -171,7 +171,7 @@ function GetFrecency($rank, $time) {
     return $rank/4
 }
 			
-function WriteCdCommandHistory() {
+function Save-CdCommandHistory() {
 
 	$currentDirectory = Get-Location | select -ExpandProperty path
 
@@ -191,11 +191,11 @@ function WriteCdCommandHistory() {
 		foreach ($line in $history) {
 					
 			if ($line -ne '') {
-				$lineObj = GetDirectoryEntry $line
+				$lineObj = ConvertTo-DirectoryEntry $line
 				if ($lineObj.Path.FullName -eq $currentDirectory) {	
 					$lineObj.Rank++
 					$foundDirectory = $true
-					WriteHistoryEntry $cdHistory $lineObj.Rank $currentDirectory
+					Save-HistoryEntry $cdHistory $lineObj.Rank $currentDirectory
 				} else {
 					[System.IO.File]::AppendAllText($cdHistory, $line + [Environment]::NewLine)
 				}
@@ -204,7 +204,7 @@ function WriteCdCommandHistory() {
 		}
 		
 		if (-not $foundDirectory) {
-			WriteHistoryEntry $cdHistory 1 $currentDirectory
+			Save-HistoryEntry $cdHistory 1 $currentDirectory
 			$runningTotal += 1
 		}
 		
@@ -213,11 +213,11 @@ function WriteCdCommandHistory() {
 			$lines = [System.IO.File]::ReadAllLines($cdHistory)
 			Remove-Item $cdHistory
 			 $lines | % {
-			 	$lineObj = GetDirectoryEntry $_
+			 	$lineObj = ConvertTo-DirectoryEntry $_
 				$lineObj.Rank = $lineObj.Rank * 0.99
 				
 				if ($lineObj.Rank -ge 1 -or $lineObj.Age -lt 86400) {
-					WriteHistoryEntry $cdHistory $lineObj.Rank $lineObj.Path.FullName
+					Save-HistoryEntry $cdHistory $lineObj.Rank $lineObj.Path.FullName
 				}
 			}
 		}
@@ -227,21 +227,21 @@ function WriteCdCommandHistory() {
 	}
 }
 
-function FormatRank($rank) {
+function Format-Rant($rank) {
 	return $rank.ToString("000#.00");
 }
 
-function WriteHistoryEntry($cdHistory, $rank, $directory) {
-	$entry = GetFormattedHistoryEntry $rank $directory
+function Save-HistoryEntry($cdHistory, $rank, $directory) {
+	$entry = ConvertTo-HistoryEntry $rank $directory
 	[System.IO.File]::AppendAllText($cdHistory, $entry)
 }
 
-function GetFormattedHistoryEntry($rank, $directory) {
+function ConvertTo-HistoryEntry($rank, $directory) {
 	$newline = [Environment]::NewLine
-	(FormatRank $rank) + (Get-Date).Ticks + $directory + $newline
+	(Format-Rant $rank) + (Get-Date).Ticks + $directory + $newline
 }
 
-function GetDirectoryEntry {
+function ConvertTo-DirectoryEntry {
 	Param(
 		[Parameter(
         Position=0, 
@@ -274,14 +274,14 @@ function GetDirectoryEntry {
 	}
 }
 
-function GetMRURecentDirectory {
+function Get-MostRecentDirectoryEntries {
 
 	$mruEntries = (Get-Item -Path HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\TypedPaths | % { $item = $_; $_.GetValueNames() | % { $item.GetValue($_) } })
 		
-	$mruEntries | % { GetFormattedHistoryEntry 1 $_ }
+	$mruEntries | % { ConvertTo-HistoryEntry 1 $_ }
 }
 
-function FilterBasedOnArgs {
+function Get-ArgsFilter {
 	Param(
 		[Parameter(ValueFromPipeline=$true)]
     	[Hashtable]$historyEntry,
@@ -293,7 +293,7 @@ function FilterBasedOnArgs {
 	Process {
 				
 		if ($Option -eq 'Frecency') {
-			$_.Add('Score', (GetFrecency $_.Rank $_.Time));
+			$_.Add('Score', (Get-Frecency $_.Rank $_.Time));
 		} elseif ($Option -eq 'Time') {
 			$_.Add('Score', $_.Time);
 		} elseif ($Option -eq 'Rank') {
