@@ -20,9 +20,8 @@ Save time typing frequently used paths.
 
 Below is a list of features which have not yet been ported from the original `z` bash script.
 
-* Specifying two separate names and matching on both, i.e. `z foo bar`
+* Specifying two separate regex's and matching on both, i.e. `z foo bar`
 * Does not have the ability to restrict searches to sub-directories of the current directory
-* The help message
 * Listing matches only
 * Removing historical entries
 
