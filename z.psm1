@@ -112,7 +112,7 @@ function z {
 		
 		$mruList = Get-MostRecentDirectoryEntries
 		
-		$history = $mruList + [System.IO.File]::ReadAllLines($cdHistory)
+		$history = [System.IO.File]::ReadAllLines($cdHistory) + $mruList
 
 		$list = @()
 
