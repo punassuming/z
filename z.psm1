@@ -253,24 +253,22 @@ function ConvertTo-DirectoryEntry {
 	
 	Process {
 
-		$matches = [System.Text.RegularExpressions.Regex]::Match($line, '(\d+\.\d{2})(\d+)(.*)');
+		$null = .{
+		
+			$matches = [System.Text.RegularExpressions.Regex]::Match($line, '(\d+\.\d{2})(\d+)(.*)');
 
-		$pathValue = $matches.Groups[3].Value.Trim()
-		
-		try {	
-			[System.IO.Path]::GetFileName($pathValue);
-		} catch [System.ArgumentException] { }
-				
-		$dir = @{
-			Name = $pathValue;
-			FullName = $matches.Groups[3].Value;
+			$pathValue = $matches.Groups[3].Value.Trim()
+			
+			try {	
+				[System.IO.Path]::GetFileName($pathValue);
+			} catch [System.ArgumentException] { }
 		}
-		
+
 		@{
-		  Rank=[decimal]::Parse($matches.Groups[1].Value);
+		  Rank=[double]::Parse($matches.Groups[1].Value);
 		  Time=[long]::Parse($matches.Groups[2].Value);
-		  Path=$dir;
-		};
+		  Path=@{ Name = $pathValue; FullName = $matches.Groups[3].Value; }
+		}
 	}
 }
 
