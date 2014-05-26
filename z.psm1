@@ -185,7 +185,7 @@ function Save-CdCommandHistory() {
 			Remove-Item $cdHistory
 		}
 		
-		$foundDirectory = false
+		$foundDirectory = $false
 		$runningTotal = 0
 		
 		foreach ($line in $history) {
@@ -222,7 +222,7 @@ function Save-CdCommandHistory() {
 			}
 		}
 	} catch {
-		[System.IO.File]::WriteAllText($cdHistory, $history) # Restore file should an error occur.
+		$history | Out-File $cdHistory # Restore file should an error occur.
 		Write-Host $_.Exception.ToString() -ForegroundColor Red
 	}
 }
