@@ -1,4 +1,6 @@
-﻿<# 
+﻿$cdHistory = "$HOME\.cdhistory"
+
+<# 
 
 .SYNOPSIS 
 
@@ -7,7 +9,7 @@
 .DESCRIPTION 
 
     After  a  short  learning  phase, z will take you to the most 'frecent'
-    directory that matches ALL of the regexes given on the command line.
+    directory that matches the regex given on the command line.
 	
 .PARAMETER JumpPath
 
@@ -32,19 +34,57 @@ Although tracking of frequently used directories is obtained through the continu
    
 .EXAMPLE
 
-CD to the most frecent directory matching 
-    
+CD to the most frecent directory matching 'foo'
+
 z foo
 
 .EXAMPLE
 
 CD to the most recently accessed directory matching 'foo'
-    
+
 z foo -o Time
 
 #>
+function z {
+	param(
+	[Parameter(Mandatory=$true, Position=0)]
+	[string]
+	${JumpPath},
 
-$cdHistory = "$HOME\.cdhistory"
+	[ValidateSet("Time", "Frecency", "Rank", "List", "CurrentDirectory")]
+	[Alias('o')]
+	[string]
+	$Option = 'Frecency')
+
+	if ((Test-Path $cdHistory)) {
+		
+		$mruList = Get-MostRecentDirectoryEntries
+		
+		$history = [System.IO.File]::ReadAllLines($cdHistory) + $mruList
+
+		$list = @()
+
+		$history.Split([Environment]::NewLine) | ? { (-not [String]::IsNullOrWhiteSpace($_)) } | ConvertTo-DirectoryEntry |
+			? { Get-DirectoryEntryMatchPredicate -path $_.Path -jumpPath $JumpPath } | Get-ArgsFilter -Option $Option |
+			% {
+				$list += $_
+			}
+		
+		if ($Option -eq 'List') {
+			$list | % { New-Object PSObject -Property  @{Rank = $_.Rank; Path = $_.Path.FullName; LastAccessed = [DateTime]$_.Time } } | Format-Table -AutoSize
+		} else {
+			if ($list.Length -gt 1) {
+							
+				$list | Sort-Object -Descending { $_.Score } | select -First 1 | % { Set-Location $_.Path.FullName }
+
+			} elseif ($list.Length -eq 0) {
+				Write-Host "$JumpPath Not found"
+			} else {
+				Set-Location $list[0].Path.FullName
+			}
+		}
+	}
+}
 
 # A wrapper function around the existing Set-Location Cmdlet.
 function cdX
@@ -94,47 +134,6 @@ function cdX
 	end
 	{
 	    $steppablePipeline.End()
-	}
-}
-
-function z {
-	param(
-	[Parameter(Mandatory=$true, Position=0)]
-	[string]
-	${JumpPath},
-
-	[ValidateSet("Time", "Frecency", "Rank", "List", "CurrentDirectory")]
-	[Alias('o')]
-	[string]
-	$Option = 'Frecency')
-
-	if ((Test-Path $cdHistory)) {
-		
-		$mruList = Get-MostRecentDirectoryEntries
-		
-		$history = [System.IO.File]::ReadAllLines($cdHistory) + $mruList
-
-		$list = @()
-
-		$history.Split([Environment]::NewLine) | ? { (-not [String]::IsNullOrWhiteSpace($_)) } | ConvertTo-DirectoryEntry |
-			? { Get-DirectoryEntryMatchPredicate -path $_.Path -jumpPath $JumpPath } | Get-ArgsFilter -Option $Option |
-			% {
-				$list += $_
-			}
-		
-		if ($Option -eq 'List') {
-			$list | % { New-Object PSObject -Property  @{Rank = $_.Rank; Path = $_.Path.FullName; LastAccessed = [DateTime]$_.Time } } | Format-Table -AutoSize
-		} else {
-			if ($list.Length -gt 1) {
-							
-				$list | Sort-Object -Descending { $_.Score } | select -First 1 | % { Set-Location $_.Path.FullName }
-
-			} elseif ($list.Length -eq 0) {
-				Write-Host "$JumpPath Not found"
-			} else {
-				Set-Location $list[0].Path.FullName
-			}
-		}
 	}
 }
 
