@@ -4,7 +4,7 @@ z lets you quickly navigate the file system in PowerShell based on your `cd` com
 
 ## Goals
 
-Save time typing frequently used paths.
+Save time typing out frequently used paths.
 
 ## Examples
 
@@ -18,7 +18,7 @@ Save time typing frequently used paths.
 
 ### Limitations
 
-Below is a list of features which have not yet been ported from the original `z` bash script.
+Below is a list of features which have not yet been ported from the original `z` bash script...yet.
 
 * Specifying two separate regex's and matching on both, i.e. `z foo bar`
 * Does not have the ability to restrict searches to sub-directories of the current directory
@@ -30,6 +30,12 @@ Below is a list of features which have not yet been ported from the original `z`
 I have added one feature which the original script did not do and that is look up recently used paths from Windows MRU listing.
 
 It also works with registry paths such as `HKLM\Software\....` and NetBIOS paths such as `\\server\share`. I have also tested this with [StudioShell](https://studioshell.codeplex.com/) which helps navigating Visual Studio that much faster.
+
+### Planned Features
+
+* Limiting folder lookups to the provider which is currently selected (current implementation allows one to jump from C:\ to HKLM:\, which can be a good thing at times)
+* Specifying a provider
+* Support for pushd/popd
 
 ### PowerShell installation
 
