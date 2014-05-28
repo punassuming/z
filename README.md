@@ -37,6 +37,8 @@ It also works with registry paths such as `HKLM\Software\....` and NetBIOS paths
 * Specifying a provider
 * Support for pushd/popd
 
+[See the issue listing](https://github.com/vincpa/z/issues)
+
 ### PowerShell installation
 
 Download the `z.psm1` file and save it to your PowerShell module directory.The default location for this is `.\WindowsPowerShell\Modules` (relative to your Documents folder). You can also extract it to another directory listed in your `$env:PSModulePath`. 
