@@ -173,7 +173,7 @@ function Get-DirectoryEntryMatchPredicate {
 			
 			$providerMatches = [System.Text.RegularExpressions.Regex]::Match($Path.FullName, $ProviderRegex).Success
 			
-			Write-Host 'Regex: ' $providerRegex ' Match: ' $providerMatches.ToString().PadRight(5, ' ') 'Path: ' $Path.FullName
+			#Write-Host 'Regex: ' $providerRegex ' Match: ' $providerMatches.ToString().PadRight(5, ' ') 'Path: ' $Path.FullName
 		}
 		
 		if ($providerMatches) {
@@ -200,7 +200,13 @@ function Get-CurrentSessionProviderDrives([string[]] $ProviderDrives) {
 }
 
 function Get-ProviderDrivesRegex([string[]] $ProviderDrives) {
-	'(?i)^((' + [String]::Concat( ($ProviderDrives | % { $_ + '|' }) ).TrimEnd('|') + '):\\).*?'
+	
+	# UNC paths get special treatment. Allows one to 'z foo -ProviderDrives \\' and specify '\\' as the drive.
+	if ($ProviderDrives -contains '\\') {
+		$uncRootPathRegex = '|(\\{2})'
+	}
+	
+	'(?i)^((' + [String]::Concat( ($ProviderDrives | % { $_ + '|' }) ).TrimEnd('|') + '):\\)' + $uncRootPathRegex + '.*?'
 }
 
 function Get-Frecency($rank, $time) {
