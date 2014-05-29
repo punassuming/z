@@ -39,6 +39,16 @@ It also works with registry paths such as `HKLM\Software\....` and NetBIOS paths
 
 ### PowerShell installation
 
+#### The easy way
+
+If you have [PSGet](http://psget.net/) installed, run: `Install-Module z`
+
+If you have do not have PSGet installed:
+
+`(new-object Net.WebClient).DownloadString("http://psget.net/GetPsGet.ps1") | iex`<br/>
+`Install-Module z`
+
+#### The manual way
 Download the `z.psm1` file and save it to your PowerShell module directory.The default location for this is `.\WindowsPowerShell\Modules` (relative to your Documents folder). You can also extract it to another directory listed in your `$env:PSModulePath`. 
 
 Assuming you want `z` to be avilable in every PowerShell session, open your profile script located at '$env:USERPROFILE\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1' and add the following line.
