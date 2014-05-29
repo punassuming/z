@@ -10,11 +10,11 @@ Save time typing out frequently used paths.
 
 	z foo         cd to most frecent dir matching foo
 
-	z -r foo      cd to highest ranked dir matching foo
+	z foo -r      cd to highest ranked dir matching foo
 
-	z -t foo      cd to most recently accessed dir matching foo
+	z foo -r      cd to most recently accessed dir matching foo
 
-	z -l foo      list all dirs matching foo (by frecency)
+	z foo -l      list all dirs matching foo (by frecency)
 
 ### Limitations
 
@@ -33,8 +33,6 @@ It also works with registry paths such as `HKLM\Software\....` and NetBIOS paths
 
 ### Planned Features
 
-* Limiting folder lookups to the provider which is currently selected (current implementation allows one to jump from C:\ to HKLM:\, which can be a good thing at times)
-* Specifying a provider
 * Support for pushd/popd
 
 [See the issue listing](https://github.com/vincpa/z/issues)
