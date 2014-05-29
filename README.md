@@ -8,13 +8,23 @@ Save time typing out frequently used paths.
 
 ## Examples
 
-	z foo         cd to most frecent dir matching foo
+Unless the -p parameter is specified, the regex you specify will be matched against a filtered drive listing from the current provider.
 
-	z foo -r      cd to highest ranked dir matching foo
+	z foo		cd to most frecent folder matching foo
 
-	z foo -r      cd to most recently accessed dir matching foo
+	z foo -r	cd to highest ranked folder matching foo
 
-	z foo -l      list all dirs matching foo (by frecency)
+	z foo -r	cd to most recently accessed folder matching foo
+
+	z foo -l	list all dirs matching folder (by frecency)
+
+	z foo -p hklm	cd to most frecent folder matching foo in drive HKLM (The registry)
+	
+If one was on the C: then the following two commands could be simply replaced by `z foo` as they belong to the same provider and all drives will be searched. But you can be specific if you like.
+
+	z foo -p c,d	cd to most frecent folder matching foo in drives C: and D:
+	
+	z foo -p \\	cd to most frecent folder matching foo for UNC paths
 
 ### Limitations
 
