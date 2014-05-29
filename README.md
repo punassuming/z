@@ -48,6 +48,8 @@ If you have do not have PSGet installed:
 `(new-object Net.WebClient).DownloadString("http://psget.net/GetPsGet.ps1") | iex`<br/>
 `Install-Module z`
 
+Once complete, you'll still need to run the command `Import-Module z` and place it in your startup profile.
+
 #### The manual way
 Download the `z.psm1` file and save it to your PowerShell module directory.The default location for this is `.\WindowsPowerShell\Modules` (relative to your Documents folder). You can also extract it to another directory listed in your `$env:PSModulePath`. 
 
