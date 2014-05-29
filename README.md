@@ -24,7 +24,7 @@ If one was on the C: then the following two commands could be simply replaced by
 
 	z foo -p c,d	cd to most frecent folder matching foo in drives C: and D:
 	
-	z foo -p \\	cd to most frecent folder matching foo for UNC paths
+	z foo -p \\ 	cd to most frecent folder matching foo for UNC paths
 
 ### Limitations
 
