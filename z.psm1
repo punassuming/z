@@ -23,6 +23,14 @@ Time - Match by recent access only
 List - List only
 CurrentDirectory - Restrict matches to subdirectories of the current directory
 
+.PARAMETER $ProviderDrives
+
+A comma separated string of drives to match on. If none is specified, it will use a drive list from the currently selected provider.
+
+For example, the following command will run the regular expression 'foo' against all folder names where the drive letters in your history match HKLM:\ C:\ or D:\
+
+z foo -p HKLM,C,D
+
 .NOTES
 
 Current PowerShell implementation is very crude and does not yet support all of the options of the original z bash script.
@@ -54,7 +62,11 @@ function z {
 	[ValidateSet("Time", "Frecency", "Rank", "List", "CurrentDirectory")]
 	[Alias('o')]
 	[string]
-	$Option = 'Frecency')
+	$Option = 'Frecency',
+	
+	[Alias('p')]
+	[string[]]
+	$ProviderDrives = $null)
 
 	if ((Test-Path $cdHistory)) {
 		
@@ -62,10 +74,12 @@ function z {
 		
 		$history = [System.IO.File]::ReadAllLines($cdHistory) + $mruList
 
+		$providerRegex = Get-CurrentSessionProviderDrives $ProviderDrives
+		
 		$list = @()
 
 		$history.Split([Environment]::NewLine) | ? { (-not [String]::IsNullOrWhiteSpace($_)) } | ConvertTo-DirectoryEntry |
-			? { Get-DirectoryEntryMatchPredicate -path $_.Path -jumpPath $JumpPath } | Get-ArgsFilter -Option $Option |
+			? { Get-DirectoryEntryMatchPredicate -path $_.Path -jumpPath $JumpPath -ProviderRegex $providerRegex } | Get-ArgsFilter -Option $Option |
 			% {
 				$list += $_
 			}
@@ -148,12 +162,45 @@ function Get-DirectoryEntryMatchPredicate {
         Mandatory=$true,
         ValueFromPipeline=$true,
         ValueFromPipelineByPropertyName=$true)]
-		[string] $JumpPath
+		[string] $JumpPath,
+		
+		[string] $ProviderRegex
 	)
 	
 	if ($Path -ne $null) {
-		[System.Text.RegularExpressions.Regex]::Match($Path.Name, $JumpPath, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase).Success
+		
+		$null = .{
+			
+			$providerMatches = [System.Text.RegularExpressions.Regex]::Match($Path.FullName, $ProviderRegex).Success
+			
+			Write-Host 'Regex: ' $providerRegex ' Match: ' $providerMatches.ToString().PadRight(5, ' ') 'Path: ' $Path.FullName
+		}
+		
+		if ($providerMatches) {
+			[System.Text.RegularExpressions.Regex]::Match($Path.Name, $JumpPath).Success
+		}
 	}
+}
+
+function Get-CurrentSessionProviderDrives([string[]] $ProviderDrives) {
+	
+	if ($ProviderDrives -ne $null -and $ProviderDrives.Length -gt 0) {
+		Get-ProviderDrivesRegex $ProviderDrives
+	} else {
+			
+		# The FileSystemProvider supports \\ and X:\ paths.
+		# An ideal solution would be to ask the provider if a path is supported.
+		# Supports drives such as C:\ and also UNC \\
+		if ((Get-Location).Provider.ImplementingType.Name -eq 'FileSystemProvider') {
+			'(?i)^(((' + [String]::Concat( ((Get-Location).Provider.Drives.Name | % { $_ + '|' }) ).TrimEnd('|') + '):\\)|(\\{2})).*?'
+		} else {
+			Get-ProviderDrivesRegex (Get-Location).Provider.Drives
+		}
+	}
+}
+
+function Get-ProviderDrivesRegex([string[]] $ProviderDrives) {
+	'(?i)^((' + [String]::Concat( ($ProviderDrives | % { $_ + '|' }) ).TrimEnd('|') + '):\\).*?'
 }
 
 function Get-Frecency($rank, $time) {
@@ -172,7 +219,7 @@ function Get-Frecency($rank, $time) {
 			
 function Save-CdCommandHistory() {
 
-	$currentDirectory = Get-Location | select -ExpandProperty path
+	$currentDirectory = Get-FormattedLocation
 
 	$history = ''
 	
@@ -223,6 +270,14 @@ function Save-CdCommandHistory() {
 	} catch {
 		$history | Out-File $cdHistory # Restore file should an error occur.
 		Write-Host $_.Exception.ToString() -ForegroundColor Red
+	}
+}
+
+function Get-FormattedLocation() {
+	if ((Get-Location).Provider.ImplementingType.Name -eq 'RegistryProvider') {
+		Get-Location | select -ExpandProperty Path # The registry provider does return a path which z understands. In other words, I'm too lazy.
+	} else {
+		Get-Location | select -ExpandProperty ProviderPath
 	}
 }
 
