@@ -320,7 +320,7 @@ function ConvertTo-DirectoryEntry {
 			$pathValue = $matches.Groups[3].Value.Trim()
 			
 			try {	
-				[System.IO.Path]::GetFileName($pathValue);
+				$pathValue = [System.IO.Path]::GetFileName($pathValue);
 			} catch [System.ArgumentException] { }
 		}
 
