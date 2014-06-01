@@ -8,13 +8,23 @@ Save time typing out frequently used paths.
 
 ## Examples
 
-	z foo         cd to most frecent dir matching foo
+Unless the -p parameter is specified, the regex you specify will be matched against a filtered drive listing from the current provider.
 
-	z foo -r      cd to highest ranked dir matching foo
+	z foo		cd to most frecent folder matching foo
 
-	z foo -r      cd to most recently accessed dir matching foo
+	z foo -r	cd to highest ranked folder matching foo
 
-	z foo -l      list all dirs matching foo (by frecency)
+	z foo -r	cd to most recently accessed folder matching foo
+
+	z foo -l	list all dirs matching folder (by frecency)
+
+	z foo -p hklm	cd to most frecent folder matching foo in drive HKLM (The registry)
+	
+If one was on the C: then the following two commands could be simply replaced by `z foo` as they belong to the same provider and all drives will be searched. But you can be specific if you like.
+
+	z foo -p c,d	cd to most frecent folder matching foo in drives C: and D:
+	
+	z foo -p \\ 	cd to most frecent folder matching foo for UNC paths
 
 ### Limitations
 
@@ -39,6 +49,18 @@ It also works with registry paths such as `HKLM\Software\....` and NetBIOS paths
 
 ### PowerShell installation
 
+#### The easy way
+
+If you have [PSGet](http://psget.net/) installed, run: `Install-Module z`
+
+If you have do not have PSGet installed:
+
+`(new-object Net.WebClient).DownloadString("http://psget.net/GetPsGet.ps1") | iex`<br/>
+`Install-Module z`
+
+Once complete, you'll still need to run the command `Import-Module z` and place it in your startup profile.
+
+#### The manual way
 Download the `z.psm1` file and save it to your PowerShell module directory.The default location for this is `.\WindowsPowerShell\Modules` (relative to your Documents folder). You can also extract it to another directory listed in your `$env:PSModulePath`. 
 
 Assuming you want `z` to be avilable in every PowerShell session, open your profile script located at '$env:USERPROFILE\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1' and add the following line.
