@@ -177,7 +177,7 @@ function Get-DirectoryEntryMatchPredicate {
 		}
 		
 		if ($providerMatches) {
-			[System.Text.RegularExpressions.Regex]::Match($Path.Name, $JumpPath).Success
+			[System.Text.RegularExpressions.Regex]::Match($Path.Name, $JumpPath, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase).Success
 		}
 	}
 }
