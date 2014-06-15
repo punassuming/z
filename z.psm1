@@ -59,7 +59,7 @@ function z {
 	[string]
 	${JumpPath},
 
-	[ValidateSet("Time", "Frecency", "Rank", "List", "CurrentDirectory")]
+	[ValidateSet("Time", "T", "Frecency", "F", "Rank", "R", "List", "L", "CurrentDirectory", "C")]
 	[Alias('o')]
 	[string]
 	$Option = 'Frecency',
@@ -84,17 +84,25 @@ function z {
 				$list += $_
 			}
 		
-		if ($Option -eq 'List') {
-			$list | % { New-Object PSObject -Property  @{Rank = $_.Rank; Path = $_.Path.FullName; LastAccessed = [DateTime]$_.Time } } | Format-Table -AutoSize
+		if ($Option -ne $null -and $Option.Length -gt 0 -and $Option[0] -eq 'l') {
+		
+			$newList = $list | % { New-Object PSObject -Property  @{Rank = $_.Rank; Path = $_.Path.FullName; LastAccessed = [DateTime]$_.Time } }
+			Format-Table -InputObject $newList -AutoSize
+			
 		} else {
-			if ($list.Length -gt 1) {
-							
-				$list | Sort-Object -Descending { $_.Score } | select -First 1 | % { Set-Location $_.Path.FullName }
 
-			} elseif ($list.Length -eq 0) {
+			if ($list.Length -eq 0) {
 				Write-Host "$JumpPath Not found"
+			
 			} else {
-				Set-Location $list[0].Path.FullName
+				if ($list.Length -gt 1) {
+					$entry = $list | Sort-Object -Descending { $_.Score } | select -First 1
+					
+				} else {
+					$entry = $list[0]
+				}
+				
+				cdX $entry.Path.FullName
 			}
 		}
 	}
