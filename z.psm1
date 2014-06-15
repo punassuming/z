@@ -4,7 +4,7 @@
 
 .SYNOPSIS 
 
-   Tracks your most used directories, based on 'frecency'.
+   Tracks your most used directories, based on 'frecency'. This is done by storing your CD command history and ranking it over time.
 
 .DESCRIPTION 
 
@@ -31,6 +31,10 @@ For example, the following command will run the regular expression 'foo' against
 
 z foo -p HKLM,C,D
 
+.PARAMETER $Remove
+
+Remove the current directory from the datafile
+
 .NOTES
 
 Current PowerShell implementation is very crude and does not yet support all of the options of the original z bash script.
@@ -55,7 +59,7 @@ z foo -o Time
 #>
 function z {
 	param(
-	[Parameter(Mandatory=$true, Position=0)]
+	[Parameter(Position=0)]
 	[string]
 	${JumpPath},
 
@@ -66,43 +70,56 @@ function z {
 	
 	[Alias('p')]
 	[string[]]
-	$ProviderDrives = $null)
+	$ProviderDrives = $null,
+	
+	[Alias('x')]
+	[switch]
+	$Remove = $null)
+	
+	if ([string]::IsNullOrWhiteSpace($JumpPath)) { Get-Help z; return; }
 
 	if ((Test-Path $cdHistory)) {
 		
-		$mruList = Get-MostRecentDirectoryEntries
-		
-		$history = [System.IO.File]::ReadAllLines($cdHistory) + $mruList
-
-		$providerRegex = Get-CurrentSessionProviderDrives $ProviderDrives
-		
-		$list = @()
-
-		$history.Split([Environment]::NewLine) | ? { (-not [String]::IsNullOrWhiteSpace($_)) } | ConvertTo-DirectoryEntry |
-			? { Get-DirectoryEntryMatchPredicate -path $_.Path -jumpPath $JumpPath -ProviderRegex $providerRegex } | Get-ArgsFilter -Option $Option |
-			% {
-				$list += $_
-			}
-		
-		if ($Option -ne $null -and $Option.Length -gt 0 -and $Option[0] -eq 'l') {
-		
-			$newList = $list | % { New-Object PSObject -Property  @{Rank = $_.Rank; Path = $_.Path.FullName; LastAccessed = [DateTime]$_.Time } }
-			Format-Table -InputObject $newList -AutoSize
-			
+		if ($Remove){
+			Save-CdCommandHistory $true
 		} else {
 
-			if ($list.Length -eq 0) {
-				Write-Host "$JumpPath Not found"
+			# This causes conflicts with the -Remove parameter. Not sure whether to remove registry entry.
+			#$mruList = Get-MostRecentDirectoryEntries
 			
-			} else {
-				if ($list.Length -gt 1) {
-					$entry = $list | Sort-Object -Descending { $_.Score } | select -First 1
-					
-				} else {
-					$entry = $list[0]
+			$history = [System.IO.File]::ReadAllLines($cdHistory) #+ $mruList
+
+			$providerRegex = Get-CurrentSessionProviderDrives $ProviderDrives
+			
+			$list = @()
+
+			$history.Split([Environment]::NewLine) | ? { (-not [String]::IsNullOrWhiteSpace($_)) } | ConvertTo-DirectoryEntry |
+				? { Get-DirectoryEntryMatchPredicate -path $_.Path -jumpPath $JumpPath -ProviderRegex $providerRegex } | Get-ArgsFilter -Option $Option |
+				% {
+					$list += $_
 				}
+			
+			if ($Option -ne $null -and $Option.Length -gt 0 -and $Option[0] -eq 'l') {
+			
+				$newList = $list | % { New-Object PSObject -Property  @{Rank = $_.Rank; Path = $_.Path.FullName; LastAccessed = [DateTime]$_.Time } }
+				Format-Table -InputObject $newList -AutoSize
 				
-				cdX $entry.Path.FullName
+			} else {
+
+				if ($list.Length -eq 0) {
+					Write-Host "$JumpPath Not found"
+				
+				} else {
+					if ($list.Length -gt 1) {
+						$entry = $list | Sort-Object -Descending { $_.Score } | select -First 1
+						
+					} else {
+						$entry = $list[0]
+					}
+					
+					Set-Location $entry.Path.FullName
+					Save-CdCommandHistory
+				}
 			}
 		}
 	}
@@ -231,7 +248,7 @@ function Get-Frecency($rank, $time) {
     return $rank/4
 }
 			
-function Save-CdCommandHistory() {
+function Save-CdCommandHistory($removeCurrentDirectory = $false) {
 
 	$currentDirectory = Get-FormattedLocation
 
@@ -251,33 +268,52 @@ function Save-CdCommandHistory() {
 		foreach ($line in $history) {
 					
 			if ($line -ne '') {
+			
+				$canIncreaseRank = $true;
+				
 				$lineObj = ConvertTo-DirectoryEntry $line
 				if ($lineObj.Path.FullName -eq $currentDirectory) {	
-					$lineObj.Rank++
+					
 					$foundDirectory = $true
-					Save-HistoryEntry $cdHistory $lineObj.Rank $currentDirectory
+					
+					if ($removeCurrentDirectory) {
+						$canIncreaseRank = $false
+						Write-Host "Removed entry $currentDirectory" -ForegroundColor Green
+						
+					} else {
+						$lineObj.Rank++
+						Save-HistoryEntry $cdHistory $lineObj.Rank $currentDirectory
+					}
 				} else {
 					[System.IO.File]::AppendAllText($cdHistory, $line + [Environment]::NewLine)
 				}
-				$runningTotal += $lineObj.Rank
+				
+				if ($canIncreaseRank) {
+					$runningTotal += $lineObj.Rank
+				}
 			}
 		}
 		
-		if (-not $foundDirectory) {
-			Save-HistoryEntry $cdHistory 1 $currentDirectory
-			$runningTotal += 1
-		}
+		if (-not $foundDirectory -and $removeCurrentDirectory) {
+			Write-Host "Current directory not found in CD history data file" -ForegroundColor Red
+		} else {
 		
-		if ($runningTotal -gt 6000) {
+			if (-not $foundDirectory) {
+				Save-HistoryEntry $cdHistory 1 $currentDirectory
+				$runningTotal += 1
+			}
 			
-			$lines = [System.IO.File]::ReadAllLines($cdHistory)
-			Remove-Item $cdHistory
-			 $lines | % {
-			 	$lineObj = ConvertTo-DirectoryEntry $_
-				$lineObj.Rank = $lineObj.Rank * 0.99
+			if ($runningTotal -gt 6000) {
 				
-				if ($lineObj.Rank -ge 1 -or $lineObj.Age -lt 86400) {
-					Save-HistoryEntry $cdHistory $lineObj.Rank $lineObj.Path.FullName
+				$lines = [System.IO.File]::ReadAllLines($cdHistory)
+				Remove-Item $cdHistory
+				 $lines | % {
+				 	$lineObj = ConvertTo-DirectoryEntry $_
+					$lineObj.Rank = $lineObj.Rank * 0.99
+					
+					if ($lineObj.Rank -ge 1 -or $lineObj.Age -lt 86400) {
+						Save-HistoryEntry $cdHistory $lineObj.Rank $lineObj.Path.FullName
+					}
 				}
 			}
 		}
