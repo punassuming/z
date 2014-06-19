@@ -1,4 +1,4 @@
-﻿$cdHistory = "$HOME\.cdhistory"
+﻿$cdHistory = Join-Path -Path $Env:USERPROFILE -ChildPath '\.cdHistory'
 
 <# 
 
@@ -76,13 +76,11 @@ function z {
 	[switch]
 	$Remove = $null)
 	
-	if ([string]::IsNullOrWhiteSpace($JumpPath)) { Get-Help z; return; }
-
+	if ((-not $Remove) -and [string]::IsNullOrWhiteSpace($JumpPath)) { Get-Help z; return; }
+	
 	if ((Test-Path $cdHistory)) {
 		
-		if ($Remove){
-			Save-CdCommandHistory $true
-		} else {
+		if (-not $Remove){
 
 			# This causes conflicts with the -Remove parameter. Not sure whether to remove registry entry.
 			#$mruList = Get-MostRecentDirectoryEntries
