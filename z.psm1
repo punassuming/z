@@ -88,7 +88,7 @@ function z {
 			# This causes conflicts with the -Remove parameter. Not sure whether to remove registry entry.
 			#$mruList = Get-MostRecentDirectoryEntries
 			
-			$history = [System.IO.File]::ReadAllLines($cdHistory) #+ $mruList
+			$history = (Get-Content -Path $cdHistory) #+ $mruList
 
 			$providerRegex = Get-CurrentSessionProviderDrives $ProviderDrives
 			
@@ -261,7 +261,7 @@ function Save-CdCommandHistory($removeCurrentDirectory = $false) {
 
 		# Copy contents of file in to memory.
 		if ((Test-Path $cdHistory)) {
-			$history = [System.IO.File]::ReadAllLines($cdHistory);
+			$history = Get-Content -Path $cdHistory
 			Remove-Item $cdHistory
 		}
 		
@@ -288,7 +288,7 @@ function Save-CdCommandHistory($removeCurrentDirectory = $false) {
 						Save-HistoryEntry $cdHistory $lineObj.Rank $currentDirectory
 					}
 				} else {
-					[System.IO.File]::AppendAllText($cdHistory, $line + [Environment]::NewLine)
+					Out-File -InputObject $line -FilePath $cdHistory -Append
 				}
 				
 				if ($canIncreaseRank) {
@@ -308,7 +308,7 @@ function Save-CdCommandHistory($removeCurrentDirectory = $false) {
 			
 			if ($runningTotal -gt 6000) {
 				
-				$lines = [System.IO.File]::ReadAllLines($cdHistory)
+				$lines = Get-Content -Path $cdHistory
 				Remove-Item $cdHistory
 				 $lines | % {
 				 	$lineObj = ConvertTo-DirectoryEntry $_
@@ -340,7 +340,7 @@ function Format-Rant($rank) {
 
 function Save-HistoryEntry($cdHistory, $rank, $directory) {
 	$entry = ConvertTo-HistoryEntry $rank $directory
-	[System.IO.File]::AppendAllText($cdHistory, $entry)
+	Out-File -InputObject $entry -FilePath $cdHistory -Append
 }
 
 function ConvertTo-HistoryEntry($rank, $directory) {
