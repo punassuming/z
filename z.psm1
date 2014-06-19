@@ -80,7 +80,10 @@ function z {
 	
 	if ((Test-Path $cdHistory)) {
 		
-		if (-not $Remove){
+		if ($Remove) {
+			Save-CdCommandHistory $Remove
+
+		} else {
 
 			# This causes conflicts with the -Remove parameter. Not sure whether to remove registry entry.
 			#$mruList = Get-MostRecentDirectoryEntries
@@ -116,10 +119,12 @@ function z {
 					}
 					
 					Set-Location $entry.Path.FullName
-					Save-CdCommandHistory
+					Save-CdCommandHistory $Remove
 				}
 			}
 		}
+	} else {
+		Save-CdCommandHistory $Remove
 	}
 }
 
