@@ -477,4 +477,4 @@ function Get-ArgsFilter {
 Set-Alias -Name cd -Value cdX -Force -Option AllScope -Scope Global
 Set-Alias -Name pushd -Value pushdX -Force -Option AllScope -Scope Global
 
-Export-ModuleMember -Function z, cdX, pushdX -Alias cd
+Export-ModuleMember -Function z, cdX, pushdX -Alias cd, pushd
