@@ -20,6 +20,8 @@ Unless the -p parameter is specified, the regex you specify will be matched agai
 
 	z foo -p hklm	cd to most frecent folder matching foo in drive HKLM (The registry)
 	
+	z -x		remove the current directory from the datafile
+	
 If one was on the C: then the following two commands could be simply replaced by `z foo` as they belong to the same provider and all drives will be searched. But you can be specific if you like.
 
 	z foo -p c,d	cd to most frecent folder matching foo in drives C: and D:
@@ -33,7 +35,6 @@ Below is a list of features which have not yet been ported from the original `z`
 * Specifying two separate regex's and matching on both, i.e. `z foo bar`
 * Does not have the ability to restrict searches to sub-directories of the current directory
 * Listing matches only
-* Removing historical entries
 
 ### Added sugar
 
