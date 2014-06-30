@@ -10,17 +10,17 @@ Save time typing out frequently used paths.
 
 Unless the -p parameter is specified, the regex you specify will be matched against a filtered drive listing from the current provider.
 
-	z foo		cd to most frecent folder matching foo
+	z foo			cd to most frecent folder matching foo
 
-	z foo -r	cd to highest ranked folder matching foo
+	z foo -o r		cd to highest ranked folder matching foo
 
-	z foo -r	cd to most recently accessed folder matching foo
+	z foo -o r		cd to most recently accessed folder matching foo
 
-	z foo -l	list all dirs matching folder (by frecency)
+	z foo -o l		list all dirs matching folder (by frecency)
 
 	z foo -p hklm	cd to most frecent folder matching foo in drive HKLM (The registry)
 	
-	z -x		remove the current directory from the datafile
+	z -x			remove the current directory from the datafile
 	
 If one was on the C: then the following two commands could be simply replaced by `z foo` as they belong to the same provider and all drives will be searched. But you can be specific if you like.
 
