@@ -16,7 +16,9 @@ Unless the -p parameter is specified, the regex you specify will be matched agai
 
 	z foo -o r		cd to most recently accessed folder matching foo
 
-	z foo -o l		list all dirs matching folder (by frecency)
+	z foo -o l		list all dirs matching folder foo (by frecency)
+	
+	z . -o l		list all history entries in the datafile
 
 	z foo -p hklm	cd to most frecent folder matching foo in drive HKLM (The registry)
 	
