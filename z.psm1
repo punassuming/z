@@ -326,7 +326,9 @@ function Save-CdCommandHistory($removeCurrentDirectory = $false) {
 		$runningTotal = 0
 		
 		foreach ($line in $history) {
-					
+			
+			$line = $line.Trim()
+			
 			if ($line -ne '') {
 			
 				$canIncreaseRank = $true;
@@ -401,8 +403,7 @@ function Save-HistoryEntry($cdHistory, $rank, $directory) {
 }
 
 function ConvertTo-HistoryEntry($rank, $directory) {
-	$newline = [Environment]::NewLine
-	(Format-Rant $rank) + (Get-Date).Ticks + $directory + $newline
+	(Format-Rant $rank) + (Get-Date).Ticks + $directory
 }
 
 function ConvertTo-DirectoryEntry {
