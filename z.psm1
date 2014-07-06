@@ -367,7 +367,7 @@ function Save-CdCommandHistory($removeCurrentDirectory = $false) {
 				
 				$lines = Get-Content -Path $cdHistory
 				Remove-Item $cdHistory
-				 $lines | % {
+				 $lines | ? { $_ -ne $null -and $_ -ne '' } | % {
 				 	$lineObj = ConvertTo-DirectoryEntry $_
 					$lineObj.Rank = $lineObj.Rank * 0.99
 					
