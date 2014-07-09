@@ -36,7 +36,6 @@ Below is a list of features which have not yet been ported from the original `z`
 
 * Specifying two separate regex's and matching on both, i.e. `z foo bar`
 * Does not have the ability to restrict searches to sub-directories of the current directory
-* Listing matches only
 
 ### Added sugar
 
