@@ -474,8 +474,13 @@ function Get-ArgsFilter {
 
 #>
 
+$orig_cd = (Get-Alias -Name 'cd').Definition
+$MyInvocation.MyCommand.ScriptBlock.Module.OnRemove = {
+    set-item alias:cd -value $orig_cd
+}
 #Override the existing CD command with the wrapper in order to log 'cd' commands.
-Set-Alias -Name cd -Value cdX -Force -Option AllScope -Scope Global
+Set-item alias:cd -Value 'cdX'
+
 Set-Alias -Name pushd -Value pushdX -Force -Option AllScope -Scope Global
 
 Export-ModuleMember -Function z, cdX, pushdX -Alias cd, pushd
