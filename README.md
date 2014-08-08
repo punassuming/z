@@ -43,9 +43,9 @@ I have added one feature which the original script did not do and that is look u
 
 It also works with registry paths such as `HKLM\Software\....` and NetBIOS paths such as `\\server\share`. I have also tested this with [StudioShell](https://studioshell.codeplex.com/) which helps navigating Visual Studio that much faster.
 
-### Planned Features
+Executing pushd will also record the current directory for use with `z`.
 
-* Support for pushd/popd
+### Planned Features
 
 [See the issue listing](https://github.com/vincpa/z/issues)
 
