@@ -39,11 +39,11 @@ Below is a list of features which have not yet been ported from the original `z`
 
 ### Added sugar
 
-I have added one feature which the original script did not do and that is look up recently used paths from Windows MRU listing.
+* Look up recently used paths from Windows MRU listing.
 
-It also works with registry paths such as `HKLM\Software\....` and NetBIOS paths such as `\\server\share`. I have also tested this with [StudioShell](https://studioshell.codeplex.com/) which helps navigating Visual Studio that much faster.
+* Works with registry paths such as `HKLM\Software\....` and NetBIOS paths such as `\\server\share`. I have also tested this with [StudioShell](https://studioshell.codeplex.com/) which helps navigating Visual Studio that much faster.
 
-Executing pushd will also record the current directory for use with `z`.
+* Executing pushd will record the current directory for use with `z`.
 
 ### Planned Features
 
