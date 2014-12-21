@@ -420,7 +420,7 @@ function ConvertTo-DirectoryEntry {
 
 		$null = .{
 		
-			$matches = [System.Text.RegularExpressions.Regex]::Match($line, '(\d+\.\d{2})(\d+)(.*)');
+			$matches = [System.Text.RegularExpressions.Regex]::Match($line, '(\d+\W\d{2})(\d+)(.*)');
 
 			$pathValue = $matches.Groups[3].Value.Trim()
 			
