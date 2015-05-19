@@ -1,4 +1,4 @@
-$cdHistory = Join-Path -Path $Env:USERPROFILE -ChildPath '\.cdHistory'
+﻿$cdHistory = Join-Path -Path $Env:USERPROFILE -ChildPath '\.cdHistory'
 
 <# 
 
@@ -544,14 +544,15 @@ function Get-ArgsFilter {
 
 #>
 
-$orig_cd = (Get-Alias -Name 'cd').Definition
-$MyInvocation.MyCommand.ScriptBlock.Module.OnRemove = {
-    set-item alias:cd -value $orig_cd
-}
+#$orig_cd = (Get-Alias -Name 'cd').Definition
+#$MyInvocation.MyCommand.ScriptBlock.Module.OnRemove = {
+#    set-item alias:cd -value $orig_cd
+#}
 #Override the existing CD command with the wrapper in order to log 'cd' commands.
 Set-item alias:cd -Value 'cdX'
 
-Set-Alias -Name pushd -Value pushdX -Force -Option AllScope -Scope Global
-Set-Alias -Name popd -Value popdX -Force -Option AllScope -Scope Global
+#Set-Alias -Name pushd -Value pushdX -Force -Option AllScope -Scope Global
+#Set-Alias -Name popd -Value popdX -Force -Option AllScope -Scope Global
 
-Export-ModuleMember -Function z, cdX, pushdX, popdX -Alias cd, pushd
+#Export-ModuleMember -Function z, cdX, pushdX, popdX -Alias cd, pushd
+z git
