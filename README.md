@@ -8,9 +8,19 @@ Save time typing out frequently used paths.
 
 ## Examples
 
-Unless the -p parameter is specified, the regex you specify will be matched against a filtered drive listing from the current provider.
+Once installed, `cd` in to a few directories
+
+`cd foo`
+
+`cd HKLM:\software\Microsoft\Office`
+
+`cd C:\Windows\Microsoft.NET\Framework64\v4.0.30319\Temporary ASP.NET Files`
+
+Then
 
 	z foo			cd to most frecent folder matching foo
+	
+	z temp			cd to most frecent folder matching `Temporary ASP.NET Files`
 
 	z foo -o r		cd to highest ranked folder matching foo
 
@@ -20,11 +30,11 @@ Unless the -p parameter is specified, the regex you specify will be matched agai
 	
 	z . -o l		list all history entries in the datafile
 
-	z foo -p hklm	cd to most frecent folder matching foo in drive HKLM (The registry)
+	z office -p hklm	cd to most frecent folder matching off in drive HKLM (The registry)
 	
 	z -x			remove the current directory from the datafile
-	
-If one was on the C: then the following two commands could be simply replaced by `z foo` as they belong to the same provider and all drives will be searched. But you can be specific if you like.
+
+Unless the -p parameter is specified, the regex you specify will be matched against a filtered drive listing from the current provider. If for example, you're on the C: then the following two commands could be simply replaced by `z foo` as they belong to the same provider and all drives will be searched. But you can be specific if you like.
 
 	z foo -p c,d	cd to most frecent folder matching foo in drives C: and D:
 	
