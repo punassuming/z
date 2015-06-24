@@ -30,7 +30,7 @@ Then
 	
 	z . -o l			list all history entries in the datafile
 
-	z office -p hklm	cd to most frecent folder matching off in drive HKLM (The registry)
+	z office -p hklm	cd to most frecent folder matching office in drive HKLM (The registry)
 	
 	z -x				remove the current directory from the datafile
 
