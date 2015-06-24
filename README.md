@@ -18,21 +18,21 @@ Once installed, `cd` in to a few directories
 
 Then
 
-	z foo			cd to most frecent folder matching foo
+	z foo				cd to most frecent folder matching foo
 	
-	z temp			cd to most frecent folder matching `Temporary ASP.NET Files`
+	z temp				cd to most frecent folder matching `Temporary ASP.NET Files`
 
-	z foo -o r		cd to highest ranked folder matching foo
+	z foo -o r			cd to highest ranked folder matching foo
 
-	z foo -o r		cd to most recently accessed folder matching foo
+	z foo -o r			cd to most recently accessed folder matching foo
 
-	z foo -o l		list all dirs matching folder foo (by frecency)
+	z foo -o l			list all dirs matching folder foo (by frecency)
 	
-	z . -o l		list all history entries in the datafile
+	z . -o l			list all history entries in the datafile
 
 	z office -p hklm	cd to most frecent folder matching off in drive HKLM (The registry)
 	
-	z -x			remove the current directory from the datafile
+	z -x				remove the current directory from the datafile
 
 Unless the -p parameter is specified, the regex you specify will be matched against a filtered drive listing from the current provider. If for example, you're on the C: then the following two commands could be simply replaced by `z foo` as they belong to the same provider and all drives will be searched. But you can be specific if you like.
 
