@@ -8,23 +8,33 @@ Save time typing out frequently used paths.
 
 ## Examples
 
-Unless the -p parameter is specified, the regex you specify will be matched against a filtered drive listing from the current provider.
+Once installed, `cd` in to a few directories
 
-	z foo			cd to most frecent folder matching foo
+`cd foo`
 
-	z foo -o r		cd to highest ranked folder matching foo
+`cd HKLM:\software\Microsoft\Office`
 
-	z foo -o r		cd to most recently accessed folder matching foo
+`cd C:\Windows\Microsoft.NET\Framework64\v4.0.30319\Temporary ASP.NET Files`
 
-	z foo -o l		list all dirs matching folder foo (by frecency)
+Then
+
+	z foo				cd to most frecent folder matching foo
 	
-	z . -o l		list all history entries in the datafile
+	z temp				cd to most frecent folder matching `Temporary ASP.NET Files`
 
-	z foo -p hklm	cd to most frecent folder matching foo in drive HKLM (The registry)
+	z foo -o r			cd to highest ranked folder matching foo
+
+	z foo -o r			cd to most recently accessed folder matching foo
+
+	z foo -o l			list all dirs matching folder foo (by frecency)
 	
-	z -x			remove the current directory from the datafile
+	z . -o l			list all history entries in the datafile
+
+	z office -p hklm	cd to most frecent folder matching office in drive HKLM (The registry)
 	
-If one was on the C: then the following two commands could be simply replaced by `z foo` as they belong to the same provider and all drives will be searched. But you can be specific if you like.
+	z -x				remove the current directory from the datafile
+
+Unless the -p parameter is specified, the regex you specify will be matched against a filtered drive listing from the current provider. If for example, you're on the C: then the following two commands could be simply replaced by `z foo` as they belong to the same provider and all drives will be searched. But you can be specific if you like.
 
 	z foo -p c,d	cd to most frecent folder matching foo in drives C: and D:
 	
