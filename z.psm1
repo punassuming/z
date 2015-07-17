@@ -76,14 +76,14 @@ function z {
 	[switch]
 	$Remove = $null)
 	
-	if ((-not $Remove) -and [string]::IsNullOrWhiteSpace($JumpPath)) { Get-Help z; return; }
+	Clean-Session
 	
+	if ((-not $Remove) -and [string]::IsNullOrWhiteSpace($JumpPath)) { Get-Help z; return; }
+		
 	if ((Test-Path $cdHistory)) {
 		
-		$history = (Get-Content -Path $cdHistory) #+ $mruList
-		
 		if ($Remove) {
-			Save-CdCommandHistory $Remove $history
+			Save-CdCommandHistory $Remove
 
 		} else {
 
@@ -94,7 +94,7 @@ function z {
 			
 			$list = @()
 
-			$history.Split([Environment]::NewLine) | ? { (-not [String]::IsNullOrWhiteSpace($_)) } | ConvertTo-DirectoryEntry |
+			$global:history.Split([Environment]::NewLine) | ? { (-not [String]::IsNullOrWhiteSpace($_)) } | ConvertTo-DirectoryEntry |
 				? { Get-DirectoryEntryMatchPredicate -path $_.Path -jumpPath $JumpPath -ProviderRegex $providerRegex } | Get-ArgsFilter -Option $Option |
 				% {
 					$list += $_
@@ -119,12 +119,12 @@ function z {
 					}
 					
 					Set-Location $entry.Path.FullName
-					Save-CdCommandHistory $Remove $history
+					Save-CdCommandHistory $Remove
 				}
 			}
 		}
 	} else {
-		Save-CdCommandHistory $Remove $history
+		Save-CdCommandHistory $Remove
 	}
 }
 
@@ -168,6 +168,7 @@ function pushdX
 	process
 	{
 	    try {
+			Clean-Session
 	        $steppablePipeline.Process($_)
 			Save-CdCommandHistory # Build up the DB.
 	    } catch {
@@ -277,6 +278,8 @@ function cdX
 
 	process
 	{
+		Clean-Session
+		
         $steppablePipeline.Process($_)
 		
 		Save-CdCommandHistory # Build up the DB.
@@ -285,6 +288,17 @@ function cdX
 	end
 	{
 	    $steppablePipeline.End()
+	}
+}
+
+function Clean-Session {
+	if ($global:history -eq $null) {
+		Write-Host "Getting history"
+		$global:history = (Get-Content -Path $cdHistory) #+ $mruList
+	}
+	if ($global:zSaveJob -ne $null) {
+		Remove-Job $global:zSaveJob -Force
+		$global:zSaveJob = $null
 	}
 }
 
@@ -360,24 +374,17 @@ function Get-Frecency($rank, $time) {
     return $rank/4
 }
 			
-function Save-CdCommandHistory($removeCurrentDirectory = $false, $history = '') {
+function Save-CdCommandHistory($removeCurrentDirectory = $false) {
 
 	$currentDirectory = Get-FormattedLocation
 		
 	try {
-
-		# Copy contents of file in to memory.
-		if ((Test-Path $cdHistory)) {
-			if ($history -eq '') {
-				$history = Get-Content -Path $cdHistory
-			}
-			Remove-Item $cdHistory
-		}
 		
 		$foundDirectory = $false
 		$runningTotal = 0
-		
-		foreach ($line in $history) {
+		$script:newHistory = ''
+				
+		foreach ($line in $global:history) {
 
 			$line = $line.Trim()
 			
@@ -408,13 +415,13 @@ function Save-CdCommandHistory($removeCurrentDirectory = $false, $history = '') 
 							
 						} else {
 							$rank++
-							Save-HistoryEntry $cdHistory $rank $currentDirectory
+							Save-HistoryEntry $rank $currentDirectory
 						}
 					}
 				}
 				
 				if ($appendCurrentLine) {
-					Out-File -InputObject $line -FilePath $cdHistory -Append
+					$script:newHistory = $script:newHistory + [System.Environment]::NewLine + $line
 				}
 
 				if ($canIncreaseRank) {
@@ -428,7 +435,7 @@ function Save-CdCommandHistory($removeCurrentDirectory = $false, $history = '') 
 		} else {
 		
 			if (-not $foundDirectory) {
-				Save-HistoryEntry $cdHistory 1 $currentDirectory
+				Save-HistoryEntry 1 $currentDirectory
 				$runningTotal += 1
 			}
 			
@@ -441,13 +448,23 @@ function Save-CdCommandHistory($removeCurrentDirectory = $false, $history = '') 
 					$lineObj.Rank = $lineObj.Rank * 0.99
 					
 					if ($lineObj.Rank -ge 1 -or $lineObj.Age -lt 86400) {
-						Save-HistoryEntry $cdHistory $lineObj.Rank $lineObj.Path.FullName
+						Save-HistoryEntry $lineObj.Rank $lineObj.Path.FullName
 					}
 				}
 			}
 		}
+		
+		#Write-Host 'Lines? ' $global:history.split([Environment]::NewLine).Length 'New History Lines? ' $script:newHistory.split([Environment]::NewLine).Length
+		
+		$global:history = $script:newHistory # Update in-memory copy
+		
+		$global:zSaveJob = Start-Job -ArgumentList $script:newHistory, $cdHistory -ScriptBlock { param($newHist,$chHistoryPath)
+			Out-File -InputObject $newHist -FilePath $chHistoryPath -Force
+			Write-Host "Wrote history file" -ForegroundColor DarkBlue
+		}
+		
 	} catch {
-		$history | Out-File $cdHistory # Restore file should an error occur.
+		$global:history | Out-File $cdHistory # Restore file should an error occur.
 		Write-Host $_.Exception.ToString() -ForegroundColor Red
 	}
 }
@@ -464,9 +481,9 @@ function Format-Rant($rank) {
 	return $rank.ToString("000#.00", [System.Globalization.CultureInfo]::InvariantCulture);
 }
 
-function Save-HistoryEntry($cdHistory, $rank, $directory) {
+function Save-HistoryEntry($rank, $directory) {
 	$entry = ConvertTo-HistoryEntry $rank $directory
-	Out-File -InputObject $entry -FilePath $cdHistory -Append
+	$script:newHistory = $script:newHistory + [System.Environment]::NewLine + $entry
 }
 
 function ConvertTo-HistoryEntry($rank, $directory) {
