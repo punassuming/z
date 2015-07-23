@@ -513,7 +513,7 @@ function ConvertTo-DirectoryEntry {
 
 		@{
 		  Rank=GetRankFromLine $line;
-		  Time=[long]::Parse($line.Substring(8, 17), [Globalization.CultureInfo]::InvariantCulture);
+		  Time=[long]::Parse($line.Substring(7, 18), [Globalization.CultureInfo]::InvariantCulture);
 		  Path=@{ Name = $fileName; FullName = $pathValue }
 		}
 	}
