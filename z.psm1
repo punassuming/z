@@ -431,8 +431,8 @@ function Save-CdCommandHistory($removeCurrentDirectory = $false) {
 				Save-HistoryEntry 1 $currentDirectory
 				$runningTotal += 1
 			}
-			
-			if ($runningTotal -gt 6000) {
+
+			if ($runningTotal -gt 1000) {
 				
 				 $global:history | ? { $_ -ne $null -and $_ -ne '' } | % {$i = 0} {
 				 
