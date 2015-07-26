@@ -485,8 +485,12 @@ function Save-HistoryEntry($rank, $directory) {
 	$global:history += $entry
 }
 
-function ConvertTo-HistoryEntry($rank, $directory) {
-	(Format-Rant $rank) + (Get-Date).Ticks + $directory
+function ConvertTo-HistoryEntry($rank, $directory, $lastAccessedTicks) {
+	if ($lastAccessedTicks -eq $null) {
+		$lastAccessedTicks = (Get-Date).Ticks
+	}
+
+	(Format-Rant $rank) + $lastAccessedTicks + $directory
 }
 
 function ConvertTo-DirectoryEntry {
@@ -508,12 +512,15 @@ function ConvertTo-DirectoryEntry {
 			try {	
 				$fileName = [System.IO.Path]::GetFileName($pathValue);
 			} catch [System.ArgumentException] { }
+			
+			$time = [long]::Parse($line.Substring(7, 18), [Globalization.CultureInfo]::InvariantCulture)
 		}
 
 		@{
 		  Rank=GetRankFromLine $line;
-		  Time=[long]::Parse($line.Substring(7, 18), [Globalization.CultureInfo]::InvariantCulture);
-		  Path=@{ Name = $fileName; FullName = $pathValue }
+		  Time=$time;
+		  Path=@{ Name = $fileName; FullName = $pathValue };
+		  Age=(Get-Date).Subtract((New-Object System.DateTime -ArgumentList $time)).TotalSeconds;
 		}
 	}
 }
