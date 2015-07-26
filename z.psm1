@@ -321,10 +321,7 @@ function Get-DirectoryEntryMatchPredicate {
 	if ($Path -ne $null) {
 		
 		$null = .{
-			
 			$providerMatches = [System.Text.RegularExpressions.Regex]::Match($Path.FullName, $ProviderRegex).Success
-			
-			#Write-Host 'Regex: ' $providerRegex ' Match: ' $providerMatches.ToString().PadRight(5, ' ') 'Path: ' $Path.FullName
 		}
 		
 		if ($providerMatches) {
