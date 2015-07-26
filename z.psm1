@@ -379,16 +379,13 @@ function Save-CdCommandHistory($removeCurrentDirectory = $false) {
 		
 		$foundDirectory = $false
 		$runningTotal = 0
-		$script:newHistory = ''
-				
-		foreach ($line in $global:history) {
-
-			$line = $line.Trim()
 			
-			if ($line -ne '') {
-				
-				$appendCurrentLine = $true
-				
+		for($i = 0; $i -lt $global:history.Length; $i++) {
+
+			$line = $global:history[$i]
+						
+			if ($line.Length -gt 0) {
+							
 				$canIncreaseRank = $true;
 				
 				$rank = 0;
@@ -404,21 +401,17 @@ function Save-CdCommandHistory($removeCurrentDirectory = $false) {
 					if ($lineObj.Path.FullName -eq $currentDirectory) {	
 							
 						$foundDirectory = $true
-						$appendCurrentLine = $false
 						
 						if ($removeCurrentDirectory) {
 							$canIncreaseRank = $false
+							$global:history[$i] = ""
 							Write-Host "Removed entry $currentDirectory" -ForegroundColor Green
 							
 						} else {
 							$rank++
-							Save-HistoryEntry $rank $currentDirectory
+							$global:history[$i] = ConvertTo-HistoryEntry $rank $currentDirectory
 						}
 					}
-				}
-				
-				if ($appendCurrentLine) {
-					$script:newHistory = $script:newHistory + [System.Environment]::NewLine + $line
 				}
 
 				if ($canIncreaseRank) {
@@ -438,25 +431,31 @@ function Save-CdCommandHistory($removeCurrentDirectory = $false) {
 			
 			if ($runningTotal -gt 6000) {
 				
-				$lines = Get-Content -Path $cdHistory
-				Remove-Item $cdHistory
-				 $lines | ? { $_ -ne $null -and $_ -ne '' } | % {
+				 $global:history | ? { $_ -ne $null -and $_ -ne '' } | % {$i = 0} {
+				 
 				 	$lineObj = ConvertTo-DirectoryEntry $_
 					$lineObj.Rank = $lineObj.Rank * 0.99
 					
-					if ($lineObj.Rank -ge 1 -or $lineObj.Age -lt 86400) {
-						Save-HistoryEntry $lineObj.Rank $lineObj.Path.FullName
+					Write-Host "Rank:" $lineObj.Rank "Age:" ($lineObj.Age/60/60) "Path:" $lineObj.Path.FullName
+					
+					# If it's been accessed in the last 14 days it can stay
+					# or
+					# If it's rank is greater than 20 and been accessed in the last 30 days it can stay
+					if ($lineObj.Age -lt 1209600 -or ($lineObj.Rank -ge 5 -and $lineObj.Age -lt 2592000)) {
+						$global:history[$i] = ConvertTo-HistoryEntry $lineObj.Rank $lineObj.Path.FullName $lineObj.Time
+					} else {
+						$global:history[$i] = ""
 					}
+					$i++;
 				}
 			}
 		}
-		
-		#Write-Host 'Lines? ' $global:history.split([Environment]::NewLine).Length 'New History Lines? ' $script:newHistory.split([Environment]::NewLine).Length
-		
-		$global:history = $script:newHistory # Update in-memory copy
-		
-		$global:zSaveJob = Start-Job -ArgumentList $script:newHistory, $cdHistory -ScriptBlock { param($newHist,$chHistoryPath)
-			Out-File -InputObject $newHist -FilePath $chHistoryPath -Force
+						
+		$global:zSaveJob = Start-Job -Name 'z PowerShell Module Job' -ArgumentList $global:history, $cdHistory -ScriptBlock { param($history,$chHistoryPath)
+			$newList = $history | ? { $_ -ne '' }
+			Out-File -InputObject $newList -FilePath "$chHistoryPath.tmp"
+			Remove-Item $chHistoryPath
+			Rename-Item -Path "$chHistoryPath.tmp" -NewName $chHistoryPath
 			Write-Host "Wrote history file" -ForegroundColor DarkBlue
 		}
 		
@@ -480,7 +479,7 @@ function Format-Rant($rank) {
 
 function Save-HistoryEntry($rank, $directory) {
 	$entry = ConvertTo-HistoryEntry $rank $directory
-	$script:newHistory = $script:newHistory + [System.Environment]::NewLine + $entry
+	$global:history += $entry
 }
 
 function ConvertTo-HistoryEntry($rank, $directory) {
