@@ -292,10 +292,13 @@ function cdX
 }
 
 function Clean-Session {
+
 	if ($global:history -eq $null) {
 		Write-Host "Getting history"
-		$global:history = (Get-Content -Path $cdHistory) #+ $mruList
+		$global:history = Get-Content -Path $cdHistory -Encoding UTF8
 	}
+	
+	# Remove the old write to disk job.
 	if ($global:zSaveJob -ne $null) {
 		Remove-Job $global:zSaveJob -Force
 		$global:zSaveJob = $null
