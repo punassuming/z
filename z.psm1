@@ -3,17 +3,17 @@ $cdHistory = Join-Path -Path $Env:USERPROFILE -ChildPath '\.cdHistory'
 $global:history = Get-Content -Path $cdHistory -Encoding UTF8
 Write-Host "Loaded z history"
 
-<# 
+<#
 
-.SYNOPSIS 
+.SYNOPSIS
 
    Tracks your most used directories, based on 'frecency'. This is done by storing your CD command history and ranking it over time.
 
-.DESCRIPTION 
+.DESCRIPTION
 
     After  a  short  learning  phase, z will take you to the most 'frecent'
     directory that matches the regex given on the command line.
-	
+
 .PARAMETER JumpPath
 
 A regular expression of the directory name to jump to.
@@ -42,11 +42,11 @@ Remove the current directory from the datafile
 
 Current PowerShell implementation is very crude and does not yet support all of the options of the original z bash script.
 Although tracking of frequently used directories is obtained through the continued use of the "cd" command, the Windows registry is also scanned for frequently accessed paths.
-	
-.LINK 
+
+.LINK
 
    https://github.com/vincpa/z
-   
+
 .EXAMPLE
 
 CD to the most frecent directory matching 'foo'
@@ -70,21 +70,21 @@ function z {
 	[Alias('o')]
 	[string]
 	$Option = 'Frecency',
-	
+
 	[Alias('p')]
 	[string[]]
 	$ProviderDrives = $null,
-	
+
 	[Alias('x')]
 	[switch]
 	$Remove = $null)
-	
+
 	Clean-Session
-	
+
 	if ((-not $Remove) -and [string]::IsNullOrWhiteSpace($JumpPath)) { Get-Help z; return; }
-		
+
 	if ((Test-Path $cdHistory)) {
-		
+
 		if ($Remove) {
 			Save-CdCommandHistory $Remove
 
@@ -94,7 +94,7 @@ function z {
 			#$mruList = Get-MostRecentDirectoryEntries
 
 			$providerRegex = Get-CurrentSessionProviderDrives $ProviderDrives
-			
+
 			$list = @()
 
 			$global:history | ? { (-not [String]::IsNullOrWhiteSpace($_)) } | ConvertTo-DirectoryEntry |
@@ -102,25 +102,25 @@ function z {
 				% {
 					$list += $_
 				}
-			
+
 			if ($Option -ne $null -and $Option.Length -gt 0 -and $Option[0] -eq 'l') {
-			
+
 				$newList = $list | % { New-Object PSObject -Property  @{Rank = $_.Rank; Path = $_.Path.FullName; LastAccessed = [DateTime]$_.Time } }
 				Format-Table -InputObject $newList -AutoSize
-				
+
 			} else {
 
 				if ($list.Length -eq 0) {
 					Write-Host "$JumpPath Not found"
-				
+
 				} else {
 					if ($list.Length -gt 1) {
 						$entry = $list | Sort-Object -Descending { $_.Score } | select -First 1
-						
+
 					} else {
 						$entry = $list[0]
 					}
-					
+
 					Set-Location $entry.Path.FullName
 					Save-CdCommandHistory $Remove
 				}
@@ -269,22 +269,22 @@ function cdX
         {
             $PSBoundParameters['OutBuffer'] = 1
         }
-		
+
 		$PSBoundParameters['ErrorAction'] = 'Stop'
-		
+
         $wrappedCmd = $ExecutionContext.InvokeCommand.GetCommand('Set-Location', [System.Management.Automation.CommandTypes]::Cmdlet)
         $scriptCmd = {& $wrappedCmd @PSBoundParameters }
-				
+
         $steppablePipeline = $scriptCmd.GetSteppablePipeline($myInvocation.CommandOrigin)
-        $steppablePipeline.Begin($PSCmdlet)					
+        $steppablePipeline.Begin($PSCmdlet)
 	}
 
 	process
 	{
 		Clean-Session
-		
+
         $steppablePipeline.Process($_)
-		
+
 		Save-CdCommandHistory # Build up the DB.
 	}
 
@@ -309,22 +309,22 @@ function Get-DirectoryEntryMatchPredicate {
         ValueFromPipeline=$true,
         ValueFromPipelineByPropertyName=$true)]
     	$Path,
-		
+
 		[Parameter(
         Mandatory=$true,
         ValueFromPipeline=$true,
         ValueFromPipelineByPropertyName=$true)]
 		[string] $JumpPath,
-		
+
 		[string] $ProviderRegex
 	)
-	
+
 	if ($Path -ne $null) {
-		
+
 		$null = .{
 			$providerMatches = [System.Text.RegularExpressions.Regex]::Match($Path.FullName, $ProviderRegex).Success
 		}
-		
+
 		if ($providerMatches) {
 			[System.Text.RegularExpressions.Regex]::Match($Path.Name, $JumpPath, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase).Success
 		}
@@ -332,11 +332,11 @@ function Get-DirectoryEntryMatchPredicate {
 }
 
 function Get-CurrentSessionProviderDrives([string[]] $ProviderDrives) {
-	
+
 	if ($ProviderDrives -ne $null -and $ProviderDrives.Length -gt 0) {
 		Get-ProviderDrivesRegex $ProviderDrives
 	} else {
-			
+
 		# The FileSystemProvider supports \\ and X:\ paths.
 		# An ideal solution would be to ask the provider if a path is supported.
 		# Supports drives such as C:\ and also UNC \\
@@ -349,12 +349,12 @@ function Get-CurrentSessionProviderDrives([string[]] $ProviderDrives) {
 }
 
 function Get-ProviderDrivesRegex([string[]] $ProviderDrives) {
-	
+
 	# UNC paths get special treatment. Allows one to 'z foo -ProviderDrives \\' and specify '\\' as the drive.
 	if ($ProviderDrives -contains '\\') {
 		$uncRootPathRegex = '|(\\{2})'
 	}
-	
+
 	'(?i)^((' + [String]::Concat( ($ProviderDrives | % { $_ + '|' }) ).TrimEnd('|') + '):\\)' + $uncRootPathRegex + '.*?'
 }
 
@@ -364,50 +364,50 @@ function Get-Frecency($rank, $time) {
 	$dx = (Get-Date).Subtract((New-Object System.DateTime -ArgumentList $time)).TotalSeconds
 
 	if( $dx -lt 3600 ) { return $rank*4 }
-    
+
 	if( $dx -lt 86400 ) { return $rank*2 }
-    
+
 	if( $dx -lt 604800 ) { return $rank/2 }
-	
+
     return $rank/4
 }
-			
+
 function Save-CdCommandHistory($removeCurrentDirectory = $false) {
 
 	$currentDirectory = Get-FormattedLocation
-		
+
 	try {
-		
+
 		$foundDirectory = $false
 		$runningTotal = 0
-			
+
 		for($i = 0; $i -lt $global:history.Length; $i++) {
 
 			$line = $global:history[$i]
-						
+
 			if ($line.Length -gt 0) {
-							
+
 				$canIncreaseRank = $true;
-				
+
 				$rank = 0;
-				
+
 				if ($foundDirectory) {
 					$rank = GetRankFromLine($line); # This function does less work to get the rank.
-					
+
 				} else {
-				
+
 					$lineObj = ConvertTo-DirectoryEntry $line
 					$rank = $lineObj.Rank
-					
-					if ($lineObj.Path.FullName -eq $currentDirectory) {	
-							
+
+					if ($lineObj.Path.FullName -eq $currentDirectory) {
+
 						$foundDirectory = $true
-						
+
 						if ($removeCurrentDirectory) {
 							$canIncreaseRank = $false
 							$global:history[$i] = ""
 							Write-Host "Removed entry $currentDirectory" -ForegroundColor Green
-							
+
 						} else {
 							$rank++
 							$global:history[$i] = ConvertTo-HistoryEntry $rank $currentDirectory
@@ -420,25 +420,25 @@ function Save-CdCommandHistory($removeCurrentDirectory = $false) {
 				}
 			}
 		}
-		
+
 		if (-not $foundDirectory -and $removeCurrentDirectory) {
 			Write-Host "Current directory not found in CD history data file" -ForegroundColor Red
 		} else {
-		
+
 			if (-not $foundDirectory) {
 				Save-HistoryEntry 1 $currentDirectory
 				$runningTotal += 1
 			}
 
 			if ($runningTotal -gt 1000) {
-				
+
 				 $global:history | ? { $_ -ne $null -and $_ -ne '' } | % {$i = 0} {
-				 
+
 				 	$lineObj = ConvertTo-DirectoryEntry $_
 					$lineObj.Rank = $lineObj.Rank * 0.99
-					
+
 					Write-Host "Rank:" $lineObj.Rank "Age:" ($lineObj.Age/60/60) "Path:" $lineObj.Path.FullName
-					
+
 					# If it's been accessed in the last 14 days it can stay
 					# or
 					# If it's rank is greater than 20 and been accessed in the last 30 days it can stay
@@ -451,7 +451,7 @@ function Save-CdCommandHistory($removeCurrentDirectory = $false) {
 				}
 			}
 		}
-						
+
 		$global:zSaveJob = Start-Job -Name 'z PowerShell Module Job' -ArgumentList $global:history, $cdHistory -ScriptBlock { param($history,$chHistoryPath)
 			$newList = $history | ? { $_ -ne '' }
 			Out-File -InputObject $newList -FilePath "$chHistoryPath.tmp"
@@ -459,7 +459,7 @@ function Save-CdCommandHistory($removeCurrentDirectory = $false) {
 			Rename-Item -Path "$chHistoryPath.tmp" -NewName $chHistoryPath
 			Write-Host "Wrote history file" -ForegroundColor DarkBlue
 		}
-		
+
 	} catch {
 		$global:history | Out-File $cdHistory # Restore file should an error occur.
 		Write-Host $_.Exception.ToString() -ForegroundColor Red
@@ -494,23 +494,23 @@ function ConvertTo-HistoryEntry($rank, $directory, $lastAccessedTicks) {
 function ConvertTo-DirectoryEntry {
 	Param(
 		[Parameter(
-        Position=0, 
-        Mandatory=$true, 
+        Position=0,
+        Mandatory=$true,
         ValueFromPipeline=$true,
         ValueFromPipelineByPropertyName=$true)]
     	[String]$line
 	)
-	
+
 	Process {
 
 		$null = .{
 
 			$pathValue = $line.Substring(25)
-			
-			try {	
+
+			try {
 				$fileName = [System.IO.Path]::GetFileName($pathValue);
 			} catch [System.ArgumentException] { }
-			
+
 			$time = [long]::Parse($line.Substring(7, 18), [Globalization.CultureInfo]::InvariantCulture)
 		}
 
@@ -531,7 +531,7 @@ function GetRankFromLine([String]$line) {
 function Get-MostRecentDirectoryEntries {
 
 	$mruEntries = (Get-Item -Path HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\TypedPaths | % { $item = $_; $_.GetValueNames() | % { $item.GetValue($_) } })
-		
+
 	$mruEntries | % { ConvertTo-HistoryEntry 1 $_ }
 }
 
@@ -539,13 +539,13 @@ function Get-ArgsFilter {
 	Param(
 		[Parameter(ValueFromPipeline=$true)]
     	[Hashtable]$historyEntry,
-		
+
 		[string]
 		$Option = 'Frecency'
 	)
-	
+
 	Process {
-				
+
 		if ($Option -eq 'Frecency') {
 			$_.Add('Score', (Get-Frecency $_.Rank $_.Time));
 		} elseif ($Option -eq 'Time') {
@@ -553,7 +553,7 @@ function Get-ArgsFilter {
 		} elseif ($Option -eq 'Rank') {
 			$_.Add('Score', $_.Rank);
 		}
-		
+
 		return $_;
 	}
 }
