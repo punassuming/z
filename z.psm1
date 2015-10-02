@@ -1,7 +1,7 @@
 $cdHistory = Join-Path -Path $Env:USERPROFILE -ChildPath '\.cdHistory'
 
-$global:history = Get-Content -Path $cdHistory -Encoding UTF8
-Write-Host "Loaded z history"
+$global:history = @()
+$global:history += Get-Content -Path $cdHistory -Encoding UTF8
 
 <#
 
