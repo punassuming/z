@@ -49,7 +49,7 @@ Below is a list of features which have not yet been ported from the original `z`
 
 ### Added sugar
 
-* Look up recently used paths from Windows MRU listing.
+* An in-memory history data file for increased performance. Useful for those who are heavy users of the command line
 
 * Works with registry paths such as `HKLM\Software\....` and NetBIOS paths such as `\\server\share`. I have also tested this with [StudioShell](https://studioshell.codeplex.com/) which helps navigating Visual Studio that much faster.
 
@@ -73,7 +73,7 @@ If you have do not have PSGet installed:
 Once complete, you'll still need to run the command `Import-Module z` and place it in your startup profile.
 
 #### The manual way
-Download the `z.psm1` file and save it to your PowerShell module directory.The default location for this is `.\WindowsPowerShell\Modules` (relative to your Documents folder). You can also extract it to another directory listed in your `$env:PSModulePath`. 
+Download the `z.psm1` file and save it to your PowerShell module directory.The default location for this is `$env:USERPROFILE\Documents\WindowsPowerShell\Modules\z` (relative to your Documents folder). You can also extract it to another directory listed in your `$env:PSModulePath`. 
 
 Assuming you want `z` to be avilable in every PowerShell session, open your profile script located at '$env:USERPROFILE\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1' and add the following line.
 
