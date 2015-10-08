@@ -298,7 +298,7 @@ function Clean-Session {
 
 	# Remove the old write to disk job.
 	if ($global:zSaveJob -ne $null) {
-		Remove-Job $global:zSaveJob -Force
+		Remove-Job $global:zSaveJob -Force -ErrorAction SilentlyContinue
 		$global:zSaveJob = $null
 	}
 }
