@@ -326,6 +326,13 @@ function Get-DirectoryEntryMatchPredicate {
 		}
 
 		if ($providerMatches) {
+			
+            # Allows matching of entire names. Remove the first two characters, added by PowerShell when the user presses the TAB key.
+            if ($JumpPath.StartsWith('.\')) {
+                $JumpPath = $JumpPath.Substring(2)
+            }
+
+            $JumpPath = [System.Text.RegularExpressions.Regex]::Escape($JumpPath)
 			[System.Text.RegularExpressions.Regex]::Match($Path.Name, $JumpPath, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase).Success
 		}
 	}
