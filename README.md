@@ -61,14 +61,19 @@ Below is a list of features which have not yet been ported from the original `z`
 
 ### PowerShell installation
 
-#### The easy way
+#### The easy way using PsGet
 
 If you have [PSGet](http://psget.net/) installed, run: `Install-Module z`
 
-If you have do not have PSGet installed:
+If you have do not have PSGet installed, see their page for instructions.
 
-`(new-object Net.WebClient).DownloadString("http://psget.net/GetPsGet.ps1") | iex`<br/>
-`Install-Module z`
+Once complete, you'll still need to run the command `Import-Module z` and place it in your startup profile.
+
+### The easy way using PowerShellGet
+
+For those with Windows 7 and above, you can issue a `Install-Module -Name z` command.
+
+See the module listing in the [official PowerShell gallary](https://www.powershellgallery.com/packages/z/)
 
 Once complete, you'll still need to run the command `Import-Module z` and place it in your startup profile.
 
