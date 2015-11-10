@@ -75,9 +75,10 @@ For those with Windows 7 and above, you can issue a `Install-Module -Name z` com
 
 See the module listing in the [official PowerShell gallary](https://www.powershellgallery.com/packages/z/)
 
-Once complete, you'll still need to run the command `Import-Module z` and place it in your startup profile.
+Once complete, run the command `Import-Module z`. For ease of use I recomend placing this command in your PowerShell startup profile.
 
-#### The manual way
+#### The hard way
+
 Download the `z.psm1` file and save it to your PowerShell module directory.The default location for this is `$env:USERPROFILE\Documents\WindowsPowerShell\Modules\z` (relative to your Documents folder). You can also extract it to another directory listed in your `$env:PSModulePath`. 
 
 Assuming you want `z` to be avilable in every PowerShell session, open your profile script located at '$env:USERPROFILE\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1' and add the following line.
@@ -88,7 +89,7 @@ If the file `Microsoft.PowerShell_profile.ps1` does not exist, you can simply cr
 
 ### Running z
 
-To run `z`, run the following command.
+To make `z` available import the module.
 
 	Import-Module z
 
