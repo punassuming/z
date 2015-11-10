@@ -89,8 +89,4 @@ If the file `Microsoft.PowerShell_profile.ps1` does not exist, you can simply cr
 
 ### Running z
 
-To make `z` available import the module.
-
-	Import-Module z
-
-Once the module is installed, you can start jumping around. Remember, you need to build up the DB of directories first so be sure to `cd` around your file system.
+Once the module is installed and has been imported in to your session you can start jumping around. Remember, you need to build up the DB of directories first so be sure to `cd` around your file system.
