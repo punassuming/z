@@ -1,8 +1,5 @@
 $cdHistory = Join-Path -Path $Env:USERPROFILE -ChildPath '\.cdHistory'
 
-$global:history = @()
-$global:history += Get-Content -Path $cdHistory -Encoding UTF8
-
 <#
 
 .SYNOPSIS
@@ -97,7 +94,7 @@ function z {
 
 			$list = @()
 
-			$global:history | ? { (-not [String]::IsNullOrWhiteSpace($_)) } | ConvertTo-DirectoryEntry |
+			$global:history |
 				? { Get-DirectoryEntryMatchPredicate -path $_.Path -jumpPath $JumpPath -ProviderRegex $providerRegex } | Get-ArgsFilter -Option $Option |
 				% {
 					$list += $_
@@ -392,39 +389,32 @@ function Save-CdCommandHistory($removeCurrentDirectory = $false) {
 
 			$line = $global:history[$i]
 
-			if ($line.Length -gt 0) {
+			$canIncreaseRank = $true;
 
-				$canIncreaseRank = $true;
+			$rank = $line.Rank;
 
-				$rank = 0;
+			if (-not $foundDirectory) {
 
-				if ($foundDirectory) {
-					$rank = GetRankFromLine($line); # This function does less work to get the rank.
+				$rank = $line.Rank
 
-				} else {
+				if ($line.Path.FullName -eq $currentDirectory) {
 
-					$lineObj = ConvertTo-DirectoryEntry $line
-					$rank = $lineObj.Rank
+					$foundDirectory = $true
 
-					if ($lineObj.Path.FullName -eq $currentDirectory) {
+					if ($removeCurrentDirectory) {
+						$canIncreaseRank = $false
+						$global:history[$i] = $null
+						Write-Host "Removed entry $currentDirectory" -ForegroundColor Green
 
-						$foundDirectory = $true
-
-						if ($removeCurrentDirectory) {
-							$canIncreaseRank = $false
-							$global:history[$i] = ""
-							Write-Host "Removed entry $currentDirectory" -ForegroundColor Green
-
-						} else {
-							$rank++
-							$global:history[$i] = ConvertTo-HistoryEntry $rank $currentDirectory
-						}
+					} else {
+						$rank++
+						Update-HistoryEntryUsageTime $global:history[$i]
 					}
 				}
+			}
 
-				if ($canIncreaseRank) {
-					$runningTotal += $rank
-				}
+			if ($canIncreaseRank) {
+				$runningTotal += $rank
 			}
 		}
 
@@ -439,9 +429,9 @@ function Save-CdCommandHistory($removeCurrentDirectory = $false) {
 
 			if ($runningTotal -gt 1000) {
 
-				 $global:history | ? { $_ -ne $null -and $_ -ne '' } | % {$i = 0} {
+				 $global:history | ? { $_ -ne $null } | % {$i = 0} {
 
-				 	$lineObj = ConvertTo-DirectoryEntry $_
+				 	$lineObj = $_
 					$lineObj.Rank = $lineObj.Rank * 0.99
 
 					Write-Host "Rank:" $lineObj.Rank "Age:" ($lineObj.Age/60/60) "Path:" $lineObj.Path.FullName
@@ -450,9 +440,9 @@ function Save-CdCommandHistory($removeCurrentDirectory = $false) {
 					# or
 					# If it's rank is greater than 20 and been accessed in the last 30 days it can stay
 					if ($lineObj.Age -lt 1209600 -or ($lineObj.Rank -ge 5 -and $lineObj.Age -lt 2592000)) {
-						$global:history[$i] = ConvertTo-HistoryEntry $lineObj.Rank $lineObj.Path.FullName $lineObj.Time
+						#$global:history[$i] = ConvertTo-DirectoryEntry (ConvertTo-HistoryEntry $lineObj.Rank $lineObj.Path.FullName $lineObj.Time)
 					} else {
-						$global:history[$i] = ""
+						$global:history[$i] = $null
 					}
 					$i++;
 				}
@@ -460,7 +450,7 @@ function Save-CdCommandHistory($removeCurrentDirectory = $false) {
 		}
 
 		$global:zSaveJob = Start-Job -Name 'z PowerShell Module Job' -ArgumentList $global:history, $cdHistory -ScriptBlock { param($history,$chHistoryPath)
-			$newList = $history | ? { $_ -ne '' }
+            $newList = Get-HistoryAsText $history
 			Out-File -InputObject $newList -FilePath "$chHistoryPath.tmp"
 			Remove-Item $chHistoryPath
 			Rename-Item -Path "$chHistoryPath.tmp" -NewName $chHistoryPath
@@ -468,9 +458,13 @@ function Save-CdCommandHistory($removeCurrentDirectory = $false) {
 		}
 
 	} catch {
-		$global:history | Out-File $cdHistory # Restore file should an error occur.
+		Out-File $cdHistory # Restore file should an error occur.
 		Write-Host $_.Exception.ToString() -ForegroundColor Red
 	}
+}
+
+function Get-HistoryAsText($history) {
+    return $history | ? { $_ -ne $null } | % { ConvertTo-HistoryEntry $_.Rank $_.Path.FullName $_.Time }
 }
 
 function Get-FormattedLocation() {
@@ -488,6 +482,11 @@ function Format-Rant($rank) {
 function Save-HistoryEntry($rank, $directory) {
 	$entry = ConvertTo-HistoryEntry $rank $directory
 	$global:history += $entry
+}
+
+function Update-HistoryEntryUsageTime($historyEntry) {
+    $historyEntry.Rank++
+    $historyEntry.Time = (Get-Date).Ticks
 }
 
 function ConvertTo-HistoryEntry($rank, $directory, $lastAccessedTicks) {
@@ -554,11 +553,11 @@ function Get-ArgsFilter {
 	Process {
 
 		if ($Option -eq 'Frecency') {
-			$_.Add('Score', (Get-Frecency $_.Rank $_.Time));
+			$_['Score'] = (Get-Frecency $_.Rank $_.Time);
 		} elseif ($Option -eq 'Time') {
-			$_.Add('Score', $_.Time);
+			$_['Score'] = $_.Time;
 		} elseif ($Option -eq 'Rank') {
-			$_.Add('Score', $_.Rank);
+			$_['Score'] = $_.Rank;
 		}
 
 		return $_;
@@ -572,10 +571,15 @@ function Get-ArgsFilter {
 
 #>
 
+# Get cdHistory and hydrate a in-memory collection
+$global:history = @()
+$global:history += Get-Content -Path $cdHistory -Encoding UTF8 | ? { (-not [String]::IsNullOrWhiteSpace($_)) } | ConvertTo-DirectoryEntry
+
 $orig_cd = (Get-Alias -Name 'cd').Definition
 $MyInvocation.MyCommand.ScriptBlock.Module.OnRemove = {
     set-item alias:cd -value $orig_cd
 }
+
 #Override the existing CD command with the wrapper in order to log 'cd' commands.
 Set-item alias:cd -Value 'cdX'
 
