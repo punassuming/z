@@ -449,18 +449,18 @@ function Save-CdCommandHistory($removeCurrentDirectory = $false) {
 			}
 		}
 
-		$global:zSaveJob = Start-Job -Name 'z PowerShell Module Job' -ArgumentList $global:history, $cdHistory -ScriptBlock { param($history,$chHistoryPath)
-            $newList = Get-HistoryAsText $history
-			Out-File -InputObject $newList -FilePath "$chHistoryPath.tmp"
-			Remove-Item $chHistoryPath
-			Rename-Item -Path "$chHistoryPath.tmp" -NewName $chHistoryPath
-			Write-Host "Wrote history file" -ForegroundColor DarkBlue
-		}
+    WriteHistoryToDisk
 
 	} catch {
-		Out-File $cdHistory # Restore file should an error occur.
 		Write-Host $_.Exception.ToString() -ForegroundColor Red
 	}
+}
+
+function WriteHistoryToDisk() {
+  $newList = Get-HistoryAsText $global:history
+  Out-File -InputObject $newList -FilePath "$cdHistory.tmp"
+  Remove-Item $cdHistory
+  Rename-Item -Path "$cdHistory.tmp" -NewName $cdHistory
 }
 
 function Get-HistoryAsText($history) {
