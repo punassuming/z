@@ -88,7 +88,13 @@ function z {
 			# This causes conflicts with the -Remove parameter. Not sure whether to remove registry entry.
 			#$mruList = Get-MostRecentDirectoryEntries
 
-			$providerRegex = Get-CurrentSessionProviderDrives $ProviderDrives
+			$providerRegex = $null
+            
+            if ($ProviderDrives.Length -gt 0) {
+                $providerRegex = Get-CurrentSessionProviderDrives $ProviderDrives
+            } else {
+                $providerRegex = Get-CurrentSessionProviderDrives (Get-PSProvider).Drives
+            }
 
 			$list = @()
 
