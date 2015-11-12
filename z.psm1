@@ -76,8 +76,6 @@ function z {
 	[switch]
 	$Remove = $null)
 
-	Clean-Session
-
 	if ((-not $Remove) -and [string]::IsNullOrWhiteSpace($JumpPath)) { Get-Help z; return; }
 
 	if ((Test-Path $cdHistory)) {
@@ -168,7 +166,6 @@ function pushdX
 	process
 	{
 	    try {
-			Clean-Session
 	        $steppablePipeline.Process($_)
 			Save-CdCommandHistory # Build up the DB.
 	    } catch {
@@ -278,8 +275,6 @@ function cdX
 
 	process
 	{
-		Clean-Session
-
         $steppablePipeline.Process($_)
 
 		Save-CdCommandHistory # Build up the DB.
@@ -288,15 +283,6 @@ function cdX
 	end
 	{
 	    $steppablePipeline.End()
-	}
-}
-
-function Clean-Session {
-
-	# Remove the old write to disk job.
-	if ($global:zSaveJob -ne $null) {
-		Remove-Job $global:zSaveJob -Force -ErrorAction SilentlyContinue
-		$global:zSaveJob = $null
 	}
 }
 
