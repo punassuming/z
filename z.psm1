@@ -467,7 +467,7 @@ function Format-Rant($rank) {
 
 function Save-HistoryEntry($rank, $directory) {
 	$entry = ConvertTo-HistoryEntry $rank $directory
-	$global:history += $entry
+	$global:history += ConvertTo-DirectoryEntry $entry
 }
 
 function Update-HistoryEntryUsageTime($historyEntry) {
