@@ -4,7 +4,9 @@ z lets you quickly navigate the file system in PowerShell based on your `cd` com
 
 ## Goals
 
-Save time typing out frequently used paths.
+Over the past 2.5 years I have poured many many hours in to tweaking a refining this script to work with PowerShell. It saves me a great deal of time navigating the file system, which is where I spent a lot of my time and has given me a great oportunity to learn PowerShell at a deeper level. Enjoy!
+
+The goal is quite simple, save time typing out the fully qualified path names of frequently accessed directories.
 
 ## Examples
 
