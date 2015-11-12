@@ -69,7 +69,6 @@ function z {
 	$Option = 'Frecency',
 
 	[Alias('p')]
-	[string[]]
 	$ProviderDrives = $null,
 
 	[Alias('x')]
@@ -93,7 +92,7 @@ function z {
             if ($ProviderDrives.Length -gt 0) {
                 $providerRegex = Get-CurrentSessionProviderDrives $ProviderDrives
             } else {
-                $providerRegex = Get-CurrentSessionProviderDrives (Get-PSProvider).Drives
+                $providerRegex = Get-CurrentSessionProviderDrives ((Get-PSProvider).Drives | select -ExpandProperty Name)
             }
 
 			$list = @()
@@ -327,7 +326,7 @@ function Get-DirectoryEntryMatchPredicate {
 	}
 }
 
-function Get-CurrentSessionProviderDrives([string[]] $ProviderDrives) {
+function Get-CurrentSessionProviderDrives([System.Collections.ArrayList] $ProviderDrives) {
 
 	if ($ProviderDrives -ne $null -and $ProviderDrives.Length -gt 0) {
 		Get-ProviderDrivesRegex $ProviderDrives
@@ -344,14 +343,19 @@ function Get-CurrentSessionProviderDrives([string[]] $ProviderDrives) {
 	}
 }
 
-function Get-ProviderDrivesRegex([string[]] $ProviderDrives) {
-
+function Get-ProviderDrivesRegex([System.Collections.ArrayList] $ProviderDrives) {
+    
 	# UNC paths get special treatment. Allows one to 'z foo -ProviderDrives \\' and specify '\\' as the drive.
 	if ($ProviderDrives -contains '\\') {
-		$uncRootPathRegex = '|(\\{2})'
+        $ProviderDrives.('\\')
 	}
 
-	'(?i)^((' + [String]::Concat( ($ProviderDrives | % { $_ + '|' }) ).TrimEnd('|') + '):\\)' + $uncRootPathRegex + '.*?'
+    if ($ProviderDrives.Count -eq 0) {
+        '(?i)^(\\{2}).*?'
+    } else {
+        $uncRootPathRegex = '|(\\{2})'
+        '(?i)^((' + [String]::Concat( ($ProviderDrives | % { $_ + '|' }) ).TrimEnd('|') + '):\\)' + $uncRootPathRegex + '.*?'
+    }
 }
 
 function Get-Frecency($rank, $time) {
