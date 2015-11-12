@@ -14,7 +14,7 @@ Once installed, `cd` in to a few directories
 
 `cd HKLM:\software\Microsoft\Office`
 
-`cd C:\Windows\Microsoft.NET\Framework64\v4.0.30319\Temporary ASP.NET Files`
+`cd 'C:\Windows\Microsoft.NET\Framework64\v4.0.30319\Temporary ASP.NET Files'`
 
 Then
 
