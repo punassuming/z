@@ -426,7 +426,7 @@ function Save-CdCommandHistory($removeCurrentDirectory = $false) {
 					# or
 					# If it's rank is greater than 20 and been accessed in the last 30 days it can stay
 					if ($lineObj.Age -lt 1209600 -or ($lineObj.Rank -ge 5 -and $lineObj.Age -lt 2592000)) {
-						#$global:history[$i] = ConvertTo-DirectoryEntry (ConvertTo-HistoryEntry $lineObj.Rank $lineObj.Path.FullName $lineObj.Time)
+						#$global:history[$i] = ConvertTo-DirectoryEntry (ConvertTo-TextualHistoryEntry $lineObj.Rank $lineObj.Path.FullName $lineObj.Time)
 					} else {
 						$global:history[$i] = $null
 					}
@@ -435,7 +435,7 @@ function Save-CdCommandHistory($removeCurrentDirectory = $false) {
 			}
 		}
 
-    WriteHistoryToDisk
+        WriteHistoryToDisk
 
 	} catch {
 		Write-Host $_.Exception.ToString() -ForegroundColor Red
@@ -443,14 +443,14 @@ function Save-CdCommandHistory($removeCurrentDirectory = $false) {
 }
 
 function WriteHistoryToDisk() {
-  $newList = Get-HistoryAsText $global:history
+  $newList = GetAllHistoryAsText $global:history
   Out-File -InputObject $newList -FilePath "$cdHistory.tmp"
   Remove-Item $cdHistory
   Rename-Item -Path "$cdHistory.tmp" -NewName $cdHistory
 }
 
-function Get-HistoryAsText($history) {
-    return $history | ? { $_ -ne $null } | % { ConvertTo-HistoryEntry $_.Rank $_.Path.FullName $_.Time }
+function GetAllHistoryAsText($history) {
+    return $history | ? { $_ -ne $null } | % { ConvertTo-TextualHistoryEntry $_.Rank $_.Path.FullName $_.Time }
 }
 
 function Get-FormattedLocation() {
@@ -461,12 +461,12 @@ function Get-FormattedLocation() {
 	}
 }
 
-function Format-Rant($rank) {
+function Format-Rank($rank) {
 	return $rank.ToString("000#.00", [System.Globalization.CultureInfo]::InvariantCulture);
 }
 
 function Save-HistoryEntry($rank, $directory) {
-	$entry = ConvertTo-HistoryEntry $rank $directory
+	$entry = ConvertTo-TextualHistoryEntry $rank $directory
 	$global:history += ConvertTo-DirectoryEntry $entry
 }
 
@@ -475,12 +475,12 @@ function Update-HistoryEntryUsageTime($historyEntry) {
     $historyEntry.Time = (Get-Date).Ticks
 }
 
-function ConvertTo-HistoryEntry($rank, $directory, $lastAccessedTicks) {
+function ConvertTo-TextualHistoryEntry($rank, $directory, $lastAccessedTicks) {
 	if ($lastAccessedTicks -eq $null) {
 		$lastAccessedTicks = (Get-Date).Ticks
 	}
 
-	(Format-Rant $rank) + $lastAccessedTicks + $directory
+	(Format-Rank $rank) + $lastAccessedTicks + $directory
 }
 
 function ConvertTo-DirectoryEntry {
@@ -524,7 +524,7 @@ function Get-MostRecentDirectoryEntries {
 
 	$mruEntries = (Get-Item -Path HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\TypedPaths | % { $item = $_; $_.GetValueNames() | % { $item.GetValue($_) } })
 
-	$mruEntries | % { ConvertTo-HistoryEntry 1 $_ }
+	$mruEntries | % { ConvertTo-TextualHistoryEntry 1 $_ }
 }
 
 function Get-ArgsFilter {
