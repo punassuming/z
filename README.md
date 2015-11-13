@@ -18,7 +18,7 @@ Once installed, `cd` in to a few directories
 
 `cd 'C:\Windows\Microsoft.NET\Framework64\v4.0.30319\Temporary ASP.NET Files'`
 
-Then
+Based on the sample commands above, the results would be:
 
 	z foo				cd to most frecent folder matching foo
 	
@@ -30,9 +30,9 @@ Then
 
 	z foo -o l			list all dirs matching folder foo (by frecency)
 	
-	z . -o l			list all history entries in the datafile
+	z foo -o l			list all history entries in the datafile matching foo
 
-	z office -p hklm	cd to most frecent folder matching office in drive HKLM (The registry)
+	z office			cd to most frecent folder matching office in drive HKLM (The registry)
 	
 	z -x				remove the current directory from the datafile
 
