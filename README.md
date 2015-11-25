@@ -8,6 +8,8 @@ Over the past 2.5 years I have poured many many hours in to tweaking a refining 
 
 The goal is quite simple, save time typing out the fully qualified path names of frequently accessed directories.
 
+![ExampleUsage]
+
 ## Examples
 
 Once installed, `cd` in to a few directories
@@ -88,3 +90,5 @@ If the file `Microsoft.PowerShell_profile.ps1` does not exist, you can simply cr
 ### Running z
 
 Once the module is installed and has been imported in to your session you can start jumping around. Remember, you need to build up the DB of directories first so be sure to `cd` around your file system.
+
+[ExampleUsage]: https://raw.githubusercontent.com/vincpa/z/master/example_usage.gif
