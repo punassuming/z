@@ -20,8 +20,14 @@ A regular expression of the directory name to jump to.
 Frecency - Match by frecency (default)
 Rank - Match by rank only
 Time - Match by recent access only
-List - List only
-CurrentDirectory - Restrict matches to subdirectories of the current directory
+
+.PARAMETER OnlyCurrentDirectory
+
+Restrict matches to subdirectories of the current directory
+
+.PARAMETER Listfiles
+
+List only, don't navigate to the directory
 
 .PARAMETER $ProviderDrives
 
@@ -63,13 +69,21 @@ function z {
 	[string]
 	${JumpPath},
 
-	[ValidateSet("Time", "T", "Frecency", "F", "Rank", "R", "List", "L", "CurrentDirectory", "C")]
+	[ValidateSet("Time", "T", "Frecency", "F", "Rank", "R")]
 	[Alias('o')]
 	[string]
 	$Option = 'Frecency',
 
+	[Alias('c')]
+	[switch]
+	$OnlyCurrentDirectory = $null,
+
 	[Alias('p')]
 	$ProviderDrives = $null,
+
+	[Alias('l')]
+	[switch]
+	$ListFiles = $null,
 
 	[Alias('x')]
 	[switch]
@@ -88,12 +102,14 @@ function z {
 			#$mruList = Get-MostRecentDirectoryEntries
 
 			$providerRegex = $null
-            
-            if ($ProviderDrives.Length -gt 0) {
-                $providerRegex = Get-CurrentSessionProviderDrives $ProviderDrives
-            } else {
-                $providerRegex = Get-CurrentSessionProviderDrives ((Get-PSProvider).Drives | select -ExpandProperty Name)
-            }
+
+      If ($OnlyCurrentDirectory) {
+          $providerRegex = (Get-FormattedLocation).replace('\','\\') + '\\.*?'
+      } elseif ($ProviderDrives.Length -gt 0) {
+          $providerRegex = Get-CurrentSessionProviderDrives $ProviderDrives
+      } else {
+          $providerRegex = Get-CurrentSessionProviderDrives ((Get-PSProvider).Drives | select -ExpandProperty Name)
+      }
 
 			$list = @()
 
@@ -103,7 +119,7 @@ function z {
 					$list += $_
 				}
 
-			if ($Option -ne $null -and $Option.Length -gt 0 -and $Option[0] -eq 'l') {
+			if ($ListFiles) {
 
 				$newList = $list | % { New-Object PSObject -Property  @{Rank = $_.Rank; Path = $_.Path.FullName; LastAccessed = [DateTime]$_.Time } }
 				Format-Table -InputObject $newList -AutoSize
