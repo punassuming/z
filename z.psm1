@@ -406,7 +406,7 @@ function Cleanup-CdCommandHistory() {
 
 			$line = $global:history[$i]
       $testDir = $line.Path.FullName
-      if (!(Test-Path $testDir)) {
+      if ($testDir -ne $null -and !(Test-Path $testDir)) {
         $global:history[$i] = $null
         Write-Host "Removing inaccessible path $testDir" -ForegroundColor Red
       }
