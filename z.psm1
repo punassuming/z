@@ -504,8 +504,7 @@ function Save-CdCommandHistory($removeCurrentDirectory = $false) {
 function WriteHistoryToDisk() {
   $newList = GetAllHistoryAsText $global:history
   Out-File -InputObject $newList -FilePath "$cdHistory.tmp"
-  if (Test-Path $cdHistory) { Remove-Item $cdHistory }
-  Rename-Item -Path "$cdHistory.tmp" -NewName $cdHistory
+  Move-Item -Path "$cdHistory.tmp" -Destination $cdHistory -Force
 }
 
 function GetAllHistoryAsText($history) {
