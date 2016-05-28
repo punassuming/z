@@ -28,7 +28,9 @@ Based on the sample commands above, the results would be:
 
 	z foo -o r			cd to highest ranked folder matching foo
 
-	z foo -o l			list all dirs matching folder foo (by frecency)
+	z foo -o f			cd to highest frecency folder matching foo
+	
+	z -l foo			list all dirs matching regex foo
 
 	z office			cd to most frecent folder matching office in drive HKLM (The registry)
 	
