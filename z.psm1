@@ -616,7 +616,9 @@ function Get-ArgsFilter {
 
 # Get cdHistory and hydrate a in-memory collection
 $global:history = @()
-$global:history += Get-Content -Path $cdHistory -Encoding UTF8 | ? { (-not [String]::IsNullOrWhiteSpace($_)) } | ConvertTo-DirectoryEntry
+if ((Test-Path $cdHistory)) {
+	$global:history += Get-Content -Path $cdHistory -Encoding UTF8 | ? { (-not [String]::IsNullOrWhiteSpace($_)) } | ConvertTo-DirectoryEntry
+}
 
 $orig_cd = (Get-Alias -Name 'cd').Definition
 $MyInvocation.MyCommand.ScriptBlock.Module.OnRemove = {
