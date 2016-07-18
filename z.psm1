@@ -20,8 +20,14 @@ A regular expression of the directory name to jump to.
 Frecency - Match by frecency (default)
 Rank - Match by rank only
 Time - Match by recent access only
-List - List only
-CurrentDirectory - Restrict matches to subdirectories of the current directory
+
+.PARAMETER OnlyCurrentDirectory
+
+Restrict matches to subdirectories of the current directory
+
+.PARAMETER Listfiles
+
+List only, don't navigate to the directory
 
 .PARAMETER $ProviderDrives
 
@@ -34,6 +40,10 @@ z foo -p HKLM,C,D
 .PARAMETER $Remove
 
 Remove the current directory from the datafile
+
+.PARAMETER $Clean
+
+Clean up all history entries that cannot be resolved
 
 .NOTES
 
@@ -63,47 +73,63 @@ function z {
 	[string]
 	${JumpPath},
 
-	[ValidateSet("Time", "T", "Frecency", "F", "Rank", "R", "List", "L", "CurrentDirectory", "C")]
+	[ValidateSet("Time", "T", "Frecency", "F", "Rank", "R")]
 	[Alias('o')]
 	[string]
 	$Option = 'Frecency',
 
+	[Alias('c')]
+	[switch]
+	$OnlyCurrentDirectory = $null,
+
 	[Alias('p')]
 	$ProviderDrives = $null,
 
+	[Alias('l')]
+	[switch]
+	$ListFiles = $null,
+
 	[Alias('x')]
 	[switch]
-	$Remove = $null)
+  $Remove = $null,
 
-	if ((-not $Remove) -and [string]::IsNullOrWhiteSpace($JumpPath)) { Get-Help z; return; }
+  [Alias('d')]
+  [switch]
+  $Clean = $null
+
+  )
+
+	if (((-not $Clean) -and (-not $Remove)) -and [string]::IsNullOrWhiteSpace($JumpPath)) { Get-Help z; return; }
 
 	if ((Test-Path $cdHistory)) {
-
 		if ($Remove) {
-			Save-CdCommandHistory $Remove
-
-		} else {
+        Save-CdCommandHistory $Remove
+		} elseif ($Clean) {
+        Cleanup-CdCommandHistory
+    } else {
 
 			# This causes conflicts with the -Remove parameter. Not sure whether to remove registry entry.
 			#$mruList = Get-MostRecentDirectoryEntries
 
 			$providerRegex = $null
-            
-            if ($ProviderDrives.Length -gt 0) {
-                $providerRegex = Get-CurrentSessionProviderDrives $ProviderDrives
-            } else {
-                $providerRegex = Get-CurrentSessionProviderDrives ((Get-PSProvider).Drives | select -ExpandProperty Name)
-            }
 
-			$list = @()
+      If ($OnlyCurrentDirectory) {
+          $providerRegex = (Get-FormattedLocation).replace('\','\\') + '\\.*?'
+      } elseif ($ProviderDrives.Length -gt 0) {
+          $providerRegex = Get-CurrentSessionProviderDrives $ProviderDrives
+      } else {
+          $providerRegex = Get-CurrentSessionProviderDrives ((Get-PSProvider).Drives | select -ExpandProperty Name)
+      }
 
-			$global:history |
+      $list = @()
+
+      $global:history |
 				? { Get-DirectoryEntryMatchPredicate -path $_.Path -jumpPath $JumpPath -ProviderRegex $providerRegex } | Get-ArgsFilter -Option $Option |
 				% {
-					$list += $_
-				}
+            If (Test-Path $_.Path.FullName) {$list += $_}
+        }
 
-			if ($Option -ne $null -and $Option.Length -gt 0 -and $Option[0] -eq 'l') {
+			if ($ListFiles) {
 
 				$newList = $list | % { New-Object PSObject -Property  @{Rank = $_.Rank; Path = $_.Path.FullName; LastAccessed = [DateTime]$_.Time } }
 				Format-Table -InputObject $newList -AutoSize
@@ -269,19 +295,25 @@ function cdX
             $PSBoundParameters['OutBuffer'] = 1
         }
 
-		$PSBoundParameters['ErrorAction'] = 'Stop'
+		$PSBoundParameters['ErrorAction'] = 'SilentlyContinue'
+
 
         $wrappedCmd = $ExecutionContext.InvokeCommand.GetCommand('Set-Location', [System.Management.Automation.CommandTypes]::Cmdlet)
         $scriptCmd = {& $wrappedCmd @PSBoundParameters }
 
         $steppablePipeline = $scriptCmd.GetSteppablePipeline($myInvocation.CommandOrigin)
+      write-host $PSCmdlet
+
         $steppablePipeline.Begin($PSCmdlet)
 	}
 
 	process
 	{
+      if (-not ${Path}) {
+        $steppablePipeline.Process($Env:HOMEPATH)
+      } else {
         $steppablePipeline.Process($_)
-
+      }
 		Save-CdCommandHistory # Build up the DB.
 	}
 
@@ -372,6 +404,49 @@ function Get-Frecency($rank, $time) {
     return $rank/4
 }
 
+function Cleanup-CdCommandHistory() {
+
+	try {
+
+		for($i = 0; $i -lt $global:history.Length; $i++) {
+
+			$line = $global:history[$i]
+      $testDir = $line.Path.FullName
+      if ($testDir -ne $null -and !(Test-Path $testDir)) {
+        $global:history[$i] = $null
+        Write-Host "Removing inaccessible path $testDir" -ForegroundColor Red
+      }
+    }
+    Remove-Old-History
+    WriteHistoryToDisk
+	} catch {
+		Write-Host $_.Exception.ToString() -ForegroundColor Red
+	}
+}
+
+
+function Remove-Old-History() {
+    If ($global:history.Length -gt 1000) {
+        $global:history | ? { $_ -ne $null } | % {$i = 0} {
+
+            $lineObj = $_
+            $lineObj.Rank = $lineObj.Rank * 0.99
+
+            # If it's been accessed in the last 14 days it can stay
+            # or
+            # If it's rank is greater than 20 and been accessed in the last 30 days it can stay
+            if ($lineObj.Age -lt 1209600 -or ($lineObj.Rank -ge 5 -and $lineObj.Age -lt 2592000)) {
+              #$global:history[$i] = ConvertTo-DirectoryEntry (ConvertTo-TextualHistoryEntry $lineObj.Rank $lineObj.Path.FullName $lineObj.Time)
+            } else {
+              Write-Host "Removing old item: Rank:" $lineObj.Rank "Age:" ($lineObj.Age/60/60) "Path:" $lineObj.Path.FullName -ForegroundColor Yellow
+              $global:history[$i] = $null
+		        }
+		    $i++;
+        }
+    }
+}
+
+
 function Save-CdCommandHistory($removeCurrentDirectory = $false) {
 
 	$currentDirectory = Get-FormattedLocation
@@ -422,30 +497,10 @@ function Save-CdCommandHistory($removeCurrentDirectory = $false) {
 				Save-HistoryEntry 1 $currentDirectory
 				$runningTotal += 1
 			}
-
-			if ($runningTotal -gt 1000) {
-
-				 $global:history | ? { $_ -ne $null } | % {$i = 0} {
-
-				 	$lineObj = $_
-					$lineObj.Rank = $lineObj.Rank * 0.99
-
-					Write-Host "Rank:" $lineObj.Rank "Age:" ($lineObj.Age/60/60) "Path:" $lineObj.Path.FullName
-
-					# If it's been accessed in the last 14 days it can stay
-					# or
-					# If it's rank is greater than 20 and been accessed in the last 30 days it can stay
-					if ($lineObj.Age -lt 1209600 -or ($lineObj.Rank -ge 5 -and $lineObj.Age -lt 2592000)) {
-						#$global:history[$i] = ConvertTo-DirectoryEntry (ConvertTo-TextualHistoryEntry $lineObj.Rank $lineObj.Path.FullName $lineObj.Time)
-					} else {
-						$global:history[$i] = $null
-					}
-					$i++;
-				}
-			}
+      	Remove-Old-History
 		}
 
-        WriteHistoryToDisk
+	WriteHistoryToDisk
 
 	} catch {
 		Write-Host $_.Exception.ToString() -ForegroundColor Red
@@ -454,9 +509,7 @@ function Save-CdCommandHistory($removeCurrentDirectory = $false) {
 
 function WriteHistoryToDisk() {
   $newList = GetAllHistoryAsText $global:history
-  Out-File -InputObject $newList -FilePath "$cdHistory.tmp"
-  Remove-Item $cdHistory
-  Rename-Item -Path "$cdHistory.tmp" -NewName $cdHistory
+  Out-File -InputObject $newList -FilePath $cdHistory
 }
 
 function GetAllHistoryAsText($history) {
