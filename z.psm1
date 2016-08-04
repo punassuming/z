@@ -147,9 +147,9 @@ function z {
 						$entry = $list[0]
 					}
 
-					Set-Location $entry.Path.FullName
-					Save-CdCommandHistory $Remove
-				}
+                   Push-Location $entry.Path.FullName
+                   Save-CdCommandHistory $Remove
+               }
 			}
 		}
 	} else {
